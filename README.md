@@ -9,7 +9,7 @@ Uma calculadora simples e direta para desenvolvedores brasileiros que trabalham 
 🌐 **[Acessar a Calculadora Online](https://victormends.github.io/calculadora-pj-internacional/)**
 
 <!-- Adicione sua imagem de screenshot dentro da pasta docs e descomente a linha abaixo -->
-<!-- ![Calculadora PJ Screenshot](docs/screenshot.png) -->
+![Calculadora PJ Screenshot](docs/screenshot.png)
 
 ## ✨ Features Principais
 
