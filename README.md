@@ -71,9 +71,19 @@ npm run dev
 npm run build
 ```
 
+## 📚 Transparência e Bases de Cálculo
+
+Para garantir total transparência sobre como a calculadora chega aos valores líquidos, aqui estão as regras de negócio e alíquotas fixadas no código (`src/utils/taxCalc.ts`), atualizadas com base no ano-calendário 2024/2025:
+
+- **Teto de Enquadramento:** MEI (R$ 130k - teto ajustado/proposto), ME (R$ 360k) e EPP (R$ 4.8M).
+- **Fator R (Simples Nacional - Anexo III/V):** A calculadora assume o uso automático do Fator R, fixando o **Pró-Labore em 28%** do faturamento bruto mensal para garantir que a empresa seja tributada no Anexo III (alíquotas menores, a partir de 6%) em vez do Anexo V (a partir de 15,5%).
+- **INSS PF (Sócio-Administrador):** Retenção fixa de **11%** sobre o valor do Pró-Labore, que é a regra padrão para contribuintes individuais (sócios) no Simples Nacional.
+- **IRRF (Imposto de Renda PF):** Utiliza a **Tabela Progressiva Atualizada (2024/2025)**, com a faixa de isenção até R$ 2.259,20 e alíquotas subindo até 27,5% (com as respectivas parcelas a deduzir).
+- **Cálculo CLT Equivalente:** Assume um cenário realista onde o PJ trabalha apenas 11 meses (1 mês de descanso não remunerado), enquanto o CLT recebe 13,33 salários (incluindo férias e 13º) + FGTS de 8% + R$ 1.000 mensais de benefícios (VA/VR/Plano). 
+
 ## ⚠️ Aviso Legal (Disclaimer)
 
-Esta é uma ferramenta de estimativa criada de desenvolvedor para desenvolvedor. Embora a lógica de cálculo procure seguir a legislação tributária brasileira vigente (como alíquotas do Simples Nacional, Anexo III, Fator R, etc.), **ela não substitui a orientação de um contador profissional**. As regras fiscais podem variar conforme a sua cidade, natureza jurídica (CNAE) e faturamento acumulado. Consulte sempre sua contabilidade antes de tomar decisões financeiras.
+Esta é uma ferramenta de estimativa criada de desenvolvedor para desenvolvedor. Embora a lógica de cálculo siga a legislação tributária brasileira descrita acima, **ela não substitui a orientação de um contador profissional**. As regras fiscais podem variar conforme a sua cidade, natureza jurídica (CNAE) e faturamento acumulado. Consulte sempre sua contabilidade antes de tomar decisões financeiras.
 
 ## 📄 Licença
 
