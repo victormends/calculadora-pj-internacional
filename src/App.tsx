@@ -45,7 +45,7 @@ const Spinner = ({ size, className }: IconProps) => (
 
 export default function App() {
   const { isDark, toggle: toggleDark } = useDarkMode();
-  const { rate: liveRate, loading: rateLoading, isLive, lastUpdated, refresh: refreshRate } = useExchangeRate();
+  const { rate: liveRate, loading: rateLoading, lastUpdated, refresh: refreshRate } = useExchangeRate();
 
   const [formState, setFormState] = useUrlState({
     usdSalary: 2500,
@@ -137,41 +137,43 @@ export default function App() {
   // Formatadores de moeda
   const formatBRL = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
+  const isUsingLiveRate = liveRate ? Math.abs(exchangeRate - liveRate) < 0.001 : false;
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 md:p-8 font-sans text-slate-800 dark:text-slate-200 transition-colors">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-2 md:p-4 font-sans text-slate-800 dark:text-slate-200 transition-colors flex flex-col justify-center">
+      <div className="max-w-6xl mx-auto w-full space-y-3">
         
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-indigo-600 rounded-lg text-white">
-              <Calculator size={28} />
+            <div className="p-2 bg-indigo-600 rounded-lg text-white">
+              <Calculator size={24} />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Calculadora PJ Internacional</h1>
-              <p className="text-slate-500 dark:text-slate-400">Simulador de ganhos líquidos para ME (Simples Nacional - Fator R)</p>
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 leading-tight">Calculadora PJ Internacional</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Simulador de ganhos líquidos para ME (Simples Nacional - Fator R)</p>
             </div>
           </div>
           
           <div className="hidden md:flex items-center space-x-2">
             <button
               onClick={toggleDark}
-              className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               title="Alternar tema"
             >
-              {isDark ? <SunIcon size={20} className="text-slate-400" /> : <MoonIcon size={20} className="text-slate-600" />}
+              {isDark ? <SunIcon size={18} className="text-slate-400" /> : <MoonIcon size={18} className="text-slate-600" />}
             </button>
-            <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center ${isLive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
-              {isLive ? (
+            <div className={`px-2 py-1 rounded-md text-[11px] font-medium flex items-center ${isUsingLiveRate ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+              {isUsingLiveRate ? (
                 <>📡 Ao vivo · {lastUpdated}</>
               ) : (
-                <>⚠️ Cotação fallback</>
+                <>✏️ Cotação manual</>
               )}
             </div>
             <button 
               onClick={refreshRate} 
               disabled={rateLoading}
-              className="p-1 rounded-md hover:bg-slate-200 transition-colors disabled:opacity-50"
+              className="p-1 rounded-md hover:bg-slate-200 transition-colors disabled:opacity-50 text-xs"
               title="Atualizar cotação"
             >
               🔄
@@ -179,166 +181,178 @@ export default function App() {
           </div>
         </div>
 
-        {/* Alerta Regime Tributário (MEI / ME / EPP / OUT) */}
+        {/* Alerta Regime Tributário (Compacto) */}
         {(() => {
           let regimeTitle = '';
           let regimeDesc = '';
           let styles = { bg: '', border: '', title: '', text: '', icon: '' };
 
           if (companyType === 'MEI') {
-            regimeTitle = 'MEI (Microempreendedor Individual)';
-            regimeDesc = 'Com o limite de R$ 130.000/ano, seu faturamento permite o enquadramento no MEI. Você paga um DAS fixo (~R$ 75,60) e é isento de IRPF se mantiver o contador para comprovar a distribuição de lucro.';
+            regimeTitle = 'MEI';
+            regimeDesc = 'Faturamento dentro do limite. DAS fixo (~R$75). Isento de IRPF com contabilidade.';
             styles = { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-500', title: 'text-emerald-800 dark:text-emerald-300', text: 'text-emerald-700 dark:text-emerald-400', icon: 'text-emerald-500' };
           } else if (companyType === 'ME') {
-            regimeTitle = 'ME (Microempresa - Simples Nacional)';
-            regimeDesc = 'Seu faturamento anual está entre R$ 130.000 e R$ 360.000. O cálculo considera uma ME no Simples Nacional, utilizando o Fator R (Pró-labore de 28%) para reduzir a carga tributária.';
+            regimeTitle = 'ME (Simples Nacional)';
+            regimeDesc = 'Faturamento entre R$ 130k e R$ 360k. Utilizando o Fator R (Pró-labore de 28%) para redução de impostos.';
             styles = { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-500', title: 'text-blue-800 dark:text-blue-300', text: 'text-blue-700 dark:text-blue-400', icon: 'text-blue-500' };
           } else if (companyType === 'EPP') {
-            regimeTitle = 'EPP (Empresa de Pequeno Porte - Simples Nacional)';
-            regimeDesc = 'Seu faturamento anual está entre R$ 360 mil e R$ 4,8 milhões. O enquadramento é como EPP. A lógica do Fator R continua válida, mas preste atenção na alíquota do DAS, que aumenta gradativamente conforme o faturamento dos últimos 12 meses.';
+            regimeTitle = 'EPP (Simples Nacional)';
+            regimeDesc = 'Faturamento entre R$ 360k e R$ 4,8M. Fator R aplicável, atenção ao aumento progressivo do DAS.';
             styles = { bg: 'bg-purple-50 dark:bg-purple-900/20', border: 'border-purple-500', title: 'text-purple-800 dark:text-purple-300', text: 'text-purple-700 dark:text-purple-400', icon: 'text-purple-500' };
           } else {
-            regimeTitle = 'Fora do Simples Nacional (> R$ 4,8 milhões)';
-            regimeDesc = 'Atenção: Seu faturamento ultrapassa o teto do Simples Nacional (R$ 4,8 milhões). Você deverá ser enquadrado no Lucro Presumido ou Lucro Real. Os cálculos desta calculadora podem não refletir a realidade exata desse regime.';
+            regimeTitle = 'Fora do Simples (> R$ 4,8M)';
+            regimeDesc = 'Faturamento excede o teto do Simples Nacional. Lucro Presumido ou Real aplicável.';
             styles = { bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-500', title: 'text-red-800 dark:text-red-300', text: 'text-red-700 dark:text-red-400', icon: 'text-red-500' };
           }
 
           return (
-            <div className={`border-l-4 p-4 rounded-r-lg flex items-start space-x-3 transition-colors ${styles.bg} ${styles.border}`}>
+            <div className={`border-l-4 p-2.5 rounded-r-lg flex items-center space-x-2 transition-colors ${styles.bg} ${styles.border}`}>
               {companyType === 'OUT' ? (
-                <AlertTriangle className={`${styles.icon} shrink-0 mt-0.5`} size={20} />
+                <AlertTriangle className={`${styles.icon} shrink-0`} size={16} />
               ) : (
-                <Info className={`${styles.icon} shrink-0 mt-0.5`} size={20} />
+                <Info className={`${styles.icon} shrink-0`} size={16} />
               )}
-              <div>
-                <h3 className={`font-semibold ${styles.title}`}>
-                  Regime Aplicado: {regimeTitle}
-                </h3>
-                <p className={`text-sm mt-1 ${styles.text}`}>
-                  {regimeDesc}
-                </p>
+              <div className="flex flex-col md:flex-row md:items-center text-sm">
+                <span className={`font-semibold mr-2 ${styles.title}`}>Regime: {regimeTitle}</span>
+                <span className={`text-xs md:text-sm ${styles.text}`}>{regimeDesc}</span>
               </div>
             </div>
           );
         })()}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           
           {/* Coluna Esquerda - Inputs */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-              <h2 className="text-lg font-semibold mb-4 flex items-center dark:text-slate-100">
-                <DollarSign size={20} className="text-emerald-500 mr-2" />
-                Variáveis da Receita
-              </h2>
+          <div className="space-y-4">
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-base font-semibold flex items-center dark:text-slate-100">
+                  <DollarSign size={18} className="text-emerald-500 mr-2" />
+                  Variáveis da Receita
+                </h2>
+                <button
+                  onClick={handleCopyLink}
+                  className="flex items-center space-x-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-2 py-1 rounded-md transition-colors"
+                >
+                  {copied ? (
+                    <><CheckIcon size={14} /> <span>Copiado!</span></>
+                  ) : (
+                    <><LinkIcon size={14} /> <span>Copiar link</span></>
+                  )}
+                </button>
+              </div>
               
-              <div className="space-y-4">
-                <div className="flex justify-between items-center mb-6">
-                  <button
-                    onClick={handleCopyLink}
-                    className="flex items-center space-x-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    {copied ? (
-                      <><CheckIcon size={16} /> <span>Copiado!</span></>
-                    ) : (
-                      <><LinkIcon size={16} /> <span>Copiar link</span></>
-                    )}
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mensal (USD)</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Mensal (USD)</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-slate-400">$</span>
+                      <span className="absolute left-2.5 top-2 text-slate-400 text-sm">$</span>
                       <input 
                         type="number" 
                         value={usdSalary ? parseFloat(usdSalary.toFixed(2)) : ''}
                         onChange={(e) => setFormState({ ...formState, usdSalary: Number(e.target.value) })}
-                        className="w-full pl-8 pr-4 py-2 bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
+                        className="w-full pl-6 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Anual (USD)</label>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Anual (USD)</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-slate-400">$</span>
+                      <span className="absolute left-2.5 top-2 text-slate-400 text-sm">$</span>
                       <input 
                         type="number" 
                         value={usdSalary ? parseFloat((usdSalary * 12).toFixed(2)) : ''}
                         onChange={(e) => setFormState({ ...formState, usdSalary: Number(e.target.value) / 12 })}
-                        className="w-full pl-8 pr-4 py-2 bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
+                        className="w-full pl-6 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cotação do Dólar (R$)</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-slate-400">R$</span>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      value={exchangeRate}
-                      onChange={(e) => {
-                        urlRateRef.current = Number(e.target.value); // Prevent overwrite from late liveRate
-                        setFormState({ ...formState, exchangeRate: Number(e.target.value) });
-                      }}
-                      className="w-full pl-10 pr-4 py-2 bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
-                    />
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex justify-between">
+                      <span>Cotação Dólar (R$)</span>
+                      {!isUsingLiveRate && liveRate && (
+                        <button 
+                          onClick={() => {
+                            urlRateRef.current = liveRate;
+                            setFormState({ ...formState, exchangeRate: liveRate });
+                          }}
+                          className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                        >
+                          Usar atual ({liveRate.toFixed(2)})
+                        </button>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        value={exchangeRate}
+                        onChange={(e) => {
+                          urlRateRef.current = Number(e.target.value); // Prevent overwrite from late liveRate
+                          setFormState({ ...formState, exchangeRate: Number(e.target.value) });
+                        }}
+                        className={`w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border ${isUsingLiveRate ? 'border-emerald-300 dark:border-emerald-600/50' : 'border-slate-300 dark:border-slate-600'} rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white`}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Taxa Remessa (%)
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="number" 
+                        step="0.1"
+                        value={remittanceFee}
+                        onChange={(e) => setFormState({ ...formState, remittanceFeePercent: Number(e.target.value) })}
+                        className="w-full pl-3 pr-6 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
+                      />
+                      <span className="absolute right-2.5 top-2 text-slate-400 text-sm">%</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Payoneer ~2%, Husky ~0.5%</p>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Taxa da Plataforma / Remessa (%)
-                  </label>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Ex: Payoneer (~2%), Husky (~0.5%)</p>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      step="0.1"
-                      value={remittanceFee}
-                      onChange={(e) => setFormState({ ...formState, remittanceFeePercent: Number(e.target.value) })}
-                      className="w-full pl-4 pr-8 py-2 bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
-                    />
-                    <span className="absolute right-4 top-2.5 text-slate-400">%</span>
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                  <div className={isMEI ? 'opacity-50' : ''}>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Alíquota DAS (%)
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        value={dasTax}
+                        onChange={(e) => setFormState({ ...formState, dasTaxPercent: Number(e.target.value) })}
+                        disabled={isMEI}
+                        className="w-full pl-3 pr-6 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 dark:disabled:bg-slate-800/50 dark:text-white"
+                      />
+                      <span className="absolute right-2.5 top-2 text-slate-400 text-sm">%</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
+                      {isMEI ? 'MEI: Valor fixo' : 'Isenção ISS/PIS (Geralmente 3.05%)'}
+                    </p>
                   </div>
-                </div>
 
-                <div className={isMEI ? 'opacity-50' : ''}>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Alíquota DAS - Simples Nacional (%)
-                  </label>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    {isMEI ? 'Inativo (MEI paga valor fixo)' : companyType === 'EPP' || companyType === 'OUT' ? 'Atenção: Ajuste a alíquota conforme a faixa da sua EPP/Regime' : 'Isenção de ISS/PIS/COFINS (Geralmente 3.05% a 4%)'}
-                  </p>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      value={dasTax}
-                      onChange={(e) => setFormState({ ...formState, dasTaxPercent: Number(e.target.value) })}
-                      disabled={isMEI}
-                      className="w-full pl-4 pr-8 py-2 bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 dark:disabled:bg-slate-800/50 dark:text-white"
-                    />
-                    <span className="absolute right-4 top-2.5 text-slate-400">%</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Contabilidade Mensal (R$)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-slate-400">R$</span>
-                    <input 
-                      type="number" 
-                      value={accountingFee}
-                      onChange={(e) => setFormState({ ...formState, accountingFee: Number(e.target.value) })}
-                      className="w-full pl-10 pr-4 py-2 bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
-                    />
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Contabilidade (R$)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
+                      <input 
+                        type="number" 
+                        value={accountingFee}
+                        onChange={(e) => setFormState({ ...formState, accountingFee: Number(e.target.value) })}
+                        className="w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -346,54 +360,50 @@ export default function App() {
           </div>
 
           {/* Coluna Direita - Resultados */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="space-y-4">
             
             {/* Card Principal - Líquido */}
-            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 rounded-xl shadow-lg text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 text-white opacity-10">
-                <Wallet size={120} />
+            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-5 rounded-xl shadow-md text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-2 -mr-2 text-white opacity-10">
+                <Wallet size={100} />
               </div>
-              <p className="text-indigo-100 font-medium mb-1 relative z-10">Líquido no Bolso (Estimativa)</p>
-              <h2 className="text-4xl md:text-5xl font-bold mb-1 relative z-10">{formatBRL(netIncomeBrl)} <span className="text-lg md:text-xl font-normal text-indigo-200">/mês</span></h2>
-              <p className="text-indigo-200 font-medium relative z-10">Ou {formatBRL(netIncomeBrl * 12)} /ano</p>
+              <p className="text-indigo-100 text-sm font-medium mb-1 relative z-10">Líquido no Bolso (Estimativa)</p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-0.5 relative z-10">{formatBRL(netIncomeBrl)} <span className="text-base md:text-lg font-normal text-indigo-200">/mês</span></h2>
+              <p className="text-indigo-200 text-sm font-medium relative z-10">Ou {formatBRL(netIncomeBrl * 12)} /ano</p>
               
-              <div className="flex flex-wrap gap-4 mt-6 relative z-10">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <p className="text-xs text-indigo-100">Faturamento Bruto (Mensal)</p>
-                  <p className="font-semibold">{formatBRL(grossBrl)}</p>
+              <div className="grid grid-cols-3 gap-2 mt-4 relative z-10">
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                  <p className="text-[10px] text-indigo-100 leading-tight">Bruto (Mês)</p>
+                  <p className="font-semibold text-sm">{formatBRL(grossBrl)}</p>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <p className="text-xs text-indigo-100">Faturamento Bruto (Anual)</p>
-                  <p className="font-semibold">{formatBRL(annualGrossBrl)}</p>
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                  <p className="text-[10px] text-indigo-100 leading-tight">Bruto (Ano)</p>
+                  <p className="font-semibold text-sm">{formatBRL(annualGrossBrl)}</p>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <p className="text-xs text-indigo-100">Custo Total (Taxas + Impostos)</p>
-                  <p className="font-semibold">{effectiveTaxRate.toFixed(1)}%</p>
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                  <p className="text-[10px] text-indigo-100 leading-tight">Custo Total</p>
+                  <p className="font-semibold text-sm">{effectiveTaxRate.toFixed(1)}%</p>
                 </div>
               </div>
             </div>
 
             {/* Breakdown detalhado */}
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-              <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-4 border-b dark:border-slate-700 pb-2">Demonstrativo de Deduções</h3>
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+              <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-3 border-b dark:border-slate-700 pb-1.5">Demonstrativo de Deduções</h3>
               
-              <div className="space-y-3 font-mono text-sm">
+              <div className="space-y-1.5 font-mono text-[13px]">
                 <div className="flex justify-between text-slate-600 dark:text-slate-300">
                   <span>Faturamento Bruto (Mensal):</span>
                   <span className="font-semibold text-slate-800 dark:text-slate-100">{formatBRL(grossBrl)}</span>
                 </div>
-                <div className="flex justify-between text-slate-600 dark:text-slate-300 pb-2 border-b border-slate-100 dark:border-slate-700">
-                  <span>Faturamento Bruto (Anual):</span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-100">{formatBRL(annualGrossBrl)}</span>
-                </div>
                 
-                <div className="flex justify-between text-red-500 dark:text-red-400 pt-2">
+                <div className="flex justify-between text-red-500 dark:text-red-400 pt-1">
                   <span>(-) Taxa Plataforma ({remittanceFee}%):</span>
                   <span>- {formatBRL(remittanceCost)}</span>
                 </div>
                 
                 <div className="flex justify-between text-red-500 dark:text-red-400">
-                  <span>(-) Imposto PJ DAS {isMEI ? '(Fixo MEI)' : `(${dasTax}%)`}:</span>
+                  <span>(-) Imposto PJ DAS {isMEI ? '(Fixo)' : `(${dasTax}%)`}:</span>
                   <span>- {formatBRL(dasCost)}</span>
                 </div>
                 
@@ -404,44 +414,36 @@ export default function App() {
 
                 {/* Bloco Pró-labore - Oculto no MEI */}
                 {!isMEI && (
-                  <div className="my-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800/80">
-                    <div className="flex items-center text-xs text-slate-500 dark:text-slate-400 mb-2 font-sans">
-                      <Info size={14} className="mr-1" />
-                      <strong>Fator R:</strong> Pró-labore fixado em 28% do bruto para reduzir o DAS.
-                    </div>
-                    <div className="flex justify-between text-indigo-700 dark:text-indigo-400 font-semibold mb-2">
-                      <span>Pró-labore Bruto (28%):</span>
+                  <div className="my-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded border border-slate-100 dark:border-slate-800/80">
+                    <div className="flex justify-between text-indigo-700 dark:text-indigo-400 font-semibold mb-1">
+                      <span>Pró-labore (28% Fator R):</span>
                       <span>{formatBRL(proLabore)}</span>
                     </div>
-                    <div className="flex justify-between text-red-500 dark:text-red-400 pl-4 border-l-2 border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-between text-red-500 dark:text-red-400 pl-3 border-l border-slate-200 dark:border-slate-700 text-xs">
                       <span>(-) INSS PF (11%):</span>
                       <span>- {formatBRL(inssCost)}</span>
                     </div>
-                    <div className="flex justify-between text-red-500 dark:text-red-400 pl-4 border-l-2 border-slate-200 dark:border-slate-700 mt-1">
-                      <span>(-) IRRF PF (Progressivo):</span>
+                    <div className="flex justify-between text-red-500 dark:text-red-400 pl-3 border-l border-slate-200 dark:border-slate-700 text-xs mt-0.5">
+                      <span>(-) IRRF PF (Progr.):</span>
                       <span>- {formatBRL(irrfCost)}</span>
                     </div>
                   </div>
                 )}
 
-                <div className="flex justify-between pt-3 border-t border-dashed border-slate-300 dark:border-slate-700 text-lg font-bold text-emerald-600 dark:text-emerald-400 font-sans">
+                <div className="flex justify-between pt-2 border-t border-dashed border-slate-300 dark:border-slate-700 text-base font-bold text-emerald-600 dark:text-emerald-400 font-sans">
                   <span>Líquido Mensal:</span>
                   <span>{formatBRL(netIncomeBrl)}</span>
                 </div>
-                <div className="flex justify-between pt-1 text-sm font-semibold text-emerald-600/80 dark:text-emerald-400/80 font-sans">
-                  <span>Líquido Anual:</span>
-                  <span>{formatBRL(netIncomeBrl * 12)}</span>
-                </div>
                 {netIncomeBrl > 0 && (
-                  <div className="mt-3 pt-3 border-t border-emerald-200/60 dark:border-emerald-800/60 text-xs text-emerald-700/90 dark:text-emerald-300/80 flex items-start">
-                    <Info size={14} className="mr-1.5 mt-0.5 flex-shrink-0" />
-                    <span>Equivale a um salário <strong>Bruto CLT de {formatBRL(equivalentCLT)}</strong>, considerando 13º, férias, FGTS (8%) e ~R$1.5k/mês em benefícios VR/VA/Saúde.</span>
+                  <div className="mt-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-emerald-700/90 dark:text-emerald-300/80 flex items-start leading-tight">
+                    <Info size={12} className="mr-1 mt-0.5 flex-shrink-0" />
+                    <span>Equivale a salário <strong>Bruto CLT de {formatBRL(equivalentCLT)}</strong> (inclui 13º, férias, FGTS e ~R$1.5k VR/VA).</span>
                   </div>
                 )}
               </div>
 
               {/* Export Buttons */}
-              <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 flex flex-col items-center">
+              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col items-center">
                 <div className="flex justify-center space-x-4 w-full">
                   <button 
                     onClick={handleExportPdf} 
