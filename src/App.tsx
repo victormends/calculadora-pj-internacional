@@ -57,13 +57,14 @@ export default function App() {
 
   const { usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee } = formState;
 
-  // Track if we successfully used URL rate param
-  const urlRateRef = useRef<number | null>(null);
-  useEffect(() => {
+  // Parse initial rate synchronously before useUrlState overrides the URL
+  const [initialUrlRate] = useState(() => {
+    if (typeof window === 'undefined') return null;
     const params = new URLSearchParams(window.location.search);
     const r = parseFloat(params.get('rate') ?? '');
-    if (!isNaN(r)) urlRateRef.current = r;
-  }, []);
+    return isNaN(r) ? null : r;
+  });
+  const urlRateRef = useRef<number | null>(initialUrlRate);
 
   // Sync initial rate once loaded if user hasn't overridden
   useEffect(() => {
