@@ -43,6 +43,10 @@ const Spinner = ({ size, className }: IconProps) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`animate-spin ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
 );
 
+const initialParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+const initialRateParam = parseFloat(initialParams.get('rate') ?? '');
+const globalInitialUrlRate = isNaN(initialRateParam) ? null : initialRateParam;
+
 export default function App() {
   const { isDark, toggle: toggleDark } = useDarkMode();
   const { rate: liveRate, loading: rateLoading, lastUpdated, refresh: refreshRate } = useExchangeRate();
@@ -57,14 +61,8 @@ export default function App() {
 
   const { usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee } = formState;
 
-  // Parse initial rate synchronously before useUrlState overrides the URL
-  const [initialUrlRate] = useState(() => {
-    if (typeof window === 'undefined') return null;
-    const params = new URLSearchParams(window.location.search);
-    const r = parseFloat(params.get('rate') ?? '');
-    return isNaN(r) ? null : r;
-  });
-  const urlRateRef = useRef<number | null>(initialUrlRate);
+  // Track if we successfully used URL rate param, initializing from the global evaluation
+  const urlRateRef = useRef<number | null>(globalInitialUrlRate);
 
   // Sync initial rate once loaded if user hasn't overridden
   useEffect(() => {
