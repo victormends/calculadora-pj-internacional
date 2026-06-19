@@ -6,6 +6,9 @@ export interface FormState {
   remittanceFeePercent: number
   dasTaxPercent: number
   accountingFee: number
+  livingCost: number
+  reserveMonths: number
+  savingsPercent: number
 }
 
 export function useUrlState(defaults: FormState): [FormState, React.Dispatch<React.SetStateAction<FormState>>] {
@@ -18,6 +21,9 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
     const fee  = parseFloat(params.get('fee')  ?? '')
     const das  = parseFloat(params.get('das')  ?? '')
     const acc  = parseFloat(params.get('acc')  ?? '')
+    const lc   = parseFloat(params.get('lc')   ?? '')
+    const rm   = parseFloat(params.get('rm')   ?? '')
+    const sp   = parseFloat(params.get('sp')   ?? '')
 
     return {
       usdSalary:            isNaN(usd)  ? defaults.usdSalary            : usd,
@@ -25,14 +31,17 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
       remittanceFeePercent: isNaN(fee)  ? defaults.remittanceFeePercent : fee,
       dasTaxPercent:        isNaN(das)  ? defaults.dasTaxPercent        : das,
       accountingFee:        isNaN(acc)  ? defaults.accountingFee        : acc,
+      livingCost:           isNaN(lc)   ? defaults.livingCost           : lc,
+      reserveMonths:        isNaN(rm)   ? defaults.reserveMonths        : rm,
+      savingsPercent:       isNaN(sp)   ? defaults.savingsPercent       : sp,
     }
   })
 
   useEffect(() => {
     // Skip replaceState if any value is invalid/NaN to avoid ?usd=NaN
-    const { usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee } = state
+    const { usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, reserveMonths, savingsPercent } = state
     
-    if ([usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee]
+    if ([usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, reserveMonths, savingsPercent]
         .some(v => isNaN(v) || v === undefined || v === null)) return
 
     const params = new URLSearchParams({
@@ -41,6 +50,9 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
       fee:  String(remittanceFeePercent),
       das:  String(dasTaxPercent),
       acc:  String(accountingFee),
+      lc:   String(livingCost),
+      rm:   String(reserveMonths),
+      sp:   String(savingsPercent),
     })
 
     window.history.replaceState(null, '', '?' + params.toString())

@@ -39,6 +39,10 @@ const Wallet = ({ size, className }: IconProps) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
 );
 
+const ShieldIcon = ({ size, className }: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2-1 4-2 7-2 2.89 0 5.11 1.05 7 2a1 1 0 0 1 1 1v7z"></path></svg>
+);
+
 const Spinner = ({ size, className }: IconProps) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`animate-spin ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
 );
@@ -53,9 +57,15 @@ export default function App() {
     remittanceFeePercent: 2.0, // 2% Payoneer
     dasTaxPercent: 3.05, // 3.05% a 4%
     accountingFee: 250,
+    livingCost: 0,
+    reserveMonths: 6,
+    savingsPercent: 50,
   });
 
-  const { usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee } = formState;
+  const { 
+    usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, 
+    dasTaxPercent: dasTax, accountingFee, livingCost, reserveMonths, savingsPercent 
+  } = formState;
 
   // Always sync live rate on load, ignoring any cached/bookmarked URL rates
   const hasSyncedLiveRate = useRef(false);
@@ -96,6 +106,14 @@ export default function App() {
   const equivalentCLT = calcEquivalentCLT(netIncomeBrl);
 
   const isMEI = companyType === 'MEI';
+
+  // Lógica de Segurança (Reserva de Emergência)
+  const fallbackLivingCost = Math.max(0, Math.round(netIncomeBrl * 0.5));
+  const actualLivingCost = livingCost > 0 ? livingCost : fallbackLivingCost;
+  const monthlySurplus = Math.max(0, netIncomeBrl - actualLivingCost);
+  const targetReserve = actualLivingCost * reserveMonths;
+  const monthlySavingsAmount = monthlySurplus * (savingsPercent / 100);
+  const monthsToTarget = monthlySavingsAmount > 0 ? Math.ceil(targetReserve / monthlySavingsAmount) : Infinity;
 
   // Export handlers
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -349,6 +367,70 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {/* Planejamento de Segurança Inputs */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+              <h2 className="text-base font-semibold mb-3 flex items-center dark:text-slate-100">
+                <ShieldIcon size={18} className="text-indigo-500 mr-2" />
+                Planejamento de Segurança
+              </h2>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Custo de Vida (R$)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
+                      <input 
+                        type="number" 
+                        value={livingCost || ''}
+                        placeholder={fallbackLivingCost.toString()}
+                        onChange={(e) => setFormState({ ...formState, livingCost: Number(e.target.value) })}
+                        className="w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder-slate-300 dark:placeholder-slate-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Alvo da Reserva (Meses)
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="number" 
+                        min="1"
+                        max="24"
+                        value={reserveMonths}
+                        onChange={(e) => setFormState({ ...formState, reserveMonths: Number(e.target.value) })}
+                        className="w-full pl-3 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <span>Guardar da Sobra (%)</span>
+                    <span className="text-indigo-600 dark:text-indigo-400 font-bold">{savingsPercent}%</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={savingsPercent}
+                    onChange={(e) => setFormState({ ...formState, savingsPercent: Number(e.target.value) })}
+                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-indigo-600"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                    <span>0%</span>
+                    <span>Guardar {formatBRL(monthlySavingsAmount)} /mês</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Coluna Direita - Resultados */}
@@ -434,8 +516,41 @@ export default function App() {
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Export Buttons */}
+            {/* Resultado do Fundo de Reserva */}
+            {monthlySurplus > 0 && (
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl shadow-sm border border-indigo-100 dark:border-indigo-800/50">
+                <h3 className="font-semibold text-sm text-indigo-900 dark:text-indigo-200 mb-3 flex items-center">
+                  <ShieldIcon size={16} className="mr-1.5" /> Colchão de Segurança
+                </h3>
+                
+                <div className="flex items-end mb-3">
+                  <div className="flex-1">
+                    <p className="text-[11px] text-indigo-600 dark:text-indigo-400 uppercase font-semibold mb-0.5">Alvo da Reserva ({reserveMonths} meses)</p>
+                    <p className="text-xl font-bold text-indigo-900 dark:text-indigo-100">{formatBRL(targetReserve)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[11px] text-indigo-600 dark:text-indigo-400 uppercase font-semibold mb-0.5">Sobras /mês</p>
+                    <p className="font-semibold text-indigo-900 dark:text-indigo-100">{formatBRL(monthlySurplus)}</p>
+                  </div>
+                </div>
+
+                <div className="relative w-full bg-indigo-200/50 dark:bg-indigo-800/50 rounded-full h-2.5 mb-2 overflow-hidden">
+                  <div className="bg-indigo-600 dark:bg-indigo-500 h-2.5 rounded-full" style={{ width: `${Math.min(100, savingsPercent)}%` }}></div>
+                </div>
+
+                <p className="text-xs text-indigo-800 dark:text-indigo-300 leading-snug">
+                  {monthlySavingsAmount > 0 ? (
+                    <>Aportando <strong>{formatBRL(monthlySavingsAmount)}</strong> por mês ({savingsPercent}% da sobra), você construirá seu fundo em <strong>{monthsToTarget} meses</strong>.</>
+                  ) : (
+                    <>Você não está guardando nada da sobra no momento.</>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {/* Export Buttons */}
               <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col items-center">
                 <div className="flex justify-center space-x-4 w-full">
                   <button 
@@ -458,7 +573,6 @@ export default function App() {
                 {exportError && <p className="text-red-500 text-sm mt-3">{exportError}</p>}
               </div>
 
-            </div>
           </div>
         </div>
 
