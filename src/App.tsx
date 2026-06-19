@@ -436,7 +436,8 @@ export default function App() {
                 {netIncomeBrl > 0 && (
                   <div className="mt-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-emerald-700/90 dark:text-emerald-300/80 flex items-start leading-tight">
                     <Info size={12} className="mr-1 mt-0.5 flex-shrink-0" />
-                    <span>Equivale a salário <strong>Bruto CLT de {formatBRL(equivalentCLT)}</strong> (inclui 13º, férias, FGTS e ~R$1.5k VR/VA).</span>
+                    <span>Equivale a uma vaga <strong>CLT anunciada por {formatBRL(equivalentCLT)}/mês</strong>. 
+                    (Cálculo assume que PJ tira 30 dias de férias não remuneradas, e que a vaga CLT oferece benefícios, FGTS, 13º e férias).</span>
                   </div>
                 )}
               </div>

@@ -29,16 +29,23 @@ export interface DeductionResult {
 }
 
 /**
- * Calcula o salário Bruto CLT equivalente para equiparar ao Líquido PJ.
- * Considera: 13º, terço de férias, FGTS (8%) e R$ 1.500/mês de benefícios (VR, VA, Saúde, etc).
- * Fórmula: Anual_PJ = Bruto_CLT * 13.33 * (0.76 + 0.08) + Benefícios_Anuais
+ * Calcula o salário Bruto mensal CLT (anunciado na vaga) equivalente ao Líquido PJ.
+ * Precedentes realistas:
+ * - PJ fatura apenas 11 meses no ano (1 mês de férias/descanso não remunerado).
+ * - CLT recebe 13,33 salários no ano (12 meses + 13º + 1/3 de férias).
+ * - CLT possui FGTS de 8% (renda indireta) sobre os 13,33 salários.
+ * - CLT possui benefícios (VR/VA/Plano de Saúde) na faixa de R$ 1.000/mês.
+ * - Desconto médio de INSS/IRRF na CLT em salários mais altos é de aprox 25% (Líquido = 75% do Bruto).
  */
 export function calcEquivalentCLT(netIncomeMonthlyBrl: number): number {
-  const annualNetPJ = netIncomeMonthlyBrl * 12
-  const annualBenefits = 1500 * 12 // Benefícios médios isentos
+  const annualNetPJ = netIncomeMonthlyBrl * 11 // PJ só ganha se trabalhar, assume 1 mês off
+  const annualBenefits = 1000 * 12 // VR/VA
   
-  // O coeficiente 11.2 vem de: 13.33 salários * 0.84 (76% líquido + 8% FGTS)
-  const equivalentGross = (annualNetPJ - annualBenefits) / 11.2
+  // Coeficiente CLT: 
+  // 13.33 * 0.75 (Líquido na conta) = 10 salários líquidos
+  // 13.33 * 0.08 (FGTS) = 1.06 salários
+  // Total do coeficiente: 11.06
+  const equivalentGross = (annualNetPJ - annualBenefits) / 11.06
   
   return equivalentGross > 0 ? equivalentGross : 0
 }
