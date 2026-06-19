@@ -39,10 +39,6 @@ const Wallet = ({ size, className }: IconProps) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path></svg>
 );
 
-const ShieldIcon = ({ size, className }: IconProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2-1 4-2 7-2 2.89 0 5.11 1.05 7 2a1 1 0 0 1 1 1v7z"></path></svg>
-);
-
 const Spinner = ({ size, className }: IconProps) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`animate-spin ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
 );
@@ -57,17 +53,13 @@ export default function App() {
     remittanceFeePercent: 2.0, // 2% Payoneer
     dasTaxPercent: 3.05, // 3.05% a 4%
     accountingFee: 250,
-    livingCost: 0,
-    reserveMonths: 6,
-    savingsPercent: 50,
+    livingCost: 4000,
   });
 
   const { 
     usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, 
-    dasTaxPercent: dasTax, accountingFee, livingCost, reserveMonths, savingsPercent 
+    dasTaxPercent: dasTax, accountingFee, livingCost
   } = formState;
-
-  const [activeTab, setActiveTab] = useState<'taxes' | 'security'>('taxes');
 
   // Always sync live rate on load, ignoring any cached/bookmarked URL rates
   const hasSyncedLiveRate = useRef(false);
@@ -105,17 +97,14 @@ export default function App() {
     netIncomeBrl, effectiveTaxRate
   } = result;
 
-  const equivalentCLT = calcEquivalentCLT(netIncomeBrl);
-
+  // Lógica de Segurança (Reserva de Emergência no 1º Ano)
   const isMEI = companyType === 'MEI';
+  const actualLivingCost = livingCost > 0 ? livingCost : 4000;
+  const targetReserve = actualLivingCost * 6; // Alvo de 6 meses de segurança
+  const monthlyReserveCost = targetReserve / 12; // Dividido nos 12 meses do 1º ano
+  const safeNetIncome = Math.max(0, netIncomeBrl - monthlyReserveCost); // Líquido Disponível após investir na segurança
 
-  // Lógica de Segurança (Reserva de Emergência)
-  const fallbackLivingCost = Math.max(0, Math.round(netIncomeBrl * 0.5));
-  const actualLivingCost = livingCost > 0 ? livingCost : fallbackLivingCost;
-  const monthlySurplus = Math.max(0, netIncomeBrl - actualLivingCost);
-  const targetReserve = actualLivingCost * reserveMonths;
-  const monthlySavingsAmount = monthlySurplus * (savingsPercent / 100);
-  const monthsToTarget = monthlySavingsAmount > 0 ? Math.ceil(targetReserve / monthlySavingsAmount) : Infinity;
+  const equivalentCLT = calcEquivalentCLT(safeNetIncome);
 
   // Export handlers
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -367,6 +356,23 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center">
+                    Custo de Vida Mensal (R$)
+                    <span className="text-[10px] text-slate-400 ml-1 font-normal">(p/ cálculo de segurança)</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
+                    <input 
+                      type="number" 
+                      value={livingCost || ''}
+                      placeholder="4000"
+                      onChange={(e) => setFormState({ ...formState, livingCost: Number(e.target.value) })}
+                      className="w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder-slate-300 dark:placeholder-slate-600"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -399,26 +405,9 @@ export default function App() {
               </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex space-x-2 bg-slate-200/50 dark:bg-slate-800/50 p-1.5 rounded-lg">
-              <button 
-                onClick={() => setActiveTab('taxes')}
-                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'taxes' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
-              >
-                📊 Impostos e Deduções
-              </button>
-              <button 
-                onClick={() => setActiveTab('security')}
-                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'security' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
-              >
-                🛡️ Fundo de Segurança
-              </button>
-            </div>
-
-            {/* Tab Content: Taxes */}
-            {activeTab === 'taxes' && (
-              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-3 border-b dark:border-slate-700 pb-1.5">Demonstrativo de Deduções</h3>
+            {/* Breakdown detalhado */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+              <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-3 border-b dark:border-slate-700 pb-1.5">Demonstrativo de Deduções</h3>
               
               <div className="space-y-1.5 font-mono text-[13px]">
                 <div className="flex justify-between text-slate-600 dark:text-slate-300">
@@ -459,112 +448,30 @@ export default function App() {
                   </div>
                 )}
 
-                <div className="flex justify-between pt-2 border-t border-dashed border-slate-300 dark:border-slate-700 text-base font-bold text-emerald-600 dark:text-emerald-400 font-sans">
-                  <span>Líquido Mensal:</span>
+                <div className="flex justify-between pt-2 border-t border-dashed border-slate-300 dark:border-slate-700 text-base font-bold text-slate-700 dark:text-slate-300 font-sans">
+                  <span>Líquido Mensal PJ:</span>
                   <span>{formatBRL(netIncomeBrl)}</span>
                 </div>
-                {netIncomeBrl > 0 && (
+
+                <div className="flex justify-between text-indigo-500 dark:text-indigo-400 font-medium pb-1">
+                  <span>(-) Fundo de Segurança 1º Ano:</span>
+                  <span>- {formatBRL(monthlyReserveCost)}</span>
+                </div>
+
+                <div className="flex justify-between pt-1 text-base font-bold text-emerald-600 dark:text-emerald-400 font-sans border-t border-slate-200 dark:border-slate-700">
+                  <span>Líquido Disponível:</span>
+                  <span>{formatBRL(safeNetIncome)}</span>
+                </div>
+
+                {safeNetIncome > 0 && (
                   <div className="mt-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-emerald-700/90 dark:text-emerald-300/80 flex items-start leading-tight">
                     <Info size={12} className="mr-1 mt-0.5 flex-shrink-0" />
                     <span>Equivale a uma vaga <strong>CLT anunciada por {formatBRL(equivalentCLT)}/mês</strong>. 
-                    (Cálculo assume que PJ tira 30 dias de férias não remuneradas, e que a vaga CLT oferece benefícios, FGTS, 13º e férias).</span>
+                    (Cálculo assume PJ com 30 dias de férias não remuneradas, e <strong>já deduz {formatBRL(monthlyReserveCost)}/mês</strong> do líquido para montar o fundo de emergência de 6 meses no 1º ano).</span>
                   </div>
                 )}
               </div>
             </div>
-          )}
-
-          {/* Tab Content: Security */}
-            {activeTab === 'security' && (
-              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-3 border-b dark:border-slate-700 pb-1.5 flex items-center">
-                  <ShieldIcon size={16} className="text-indigo-500 mr-2" /> 
-                  Construa seu Colchão de Segurança
-                </h3>
-                
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
-                  Diferente da CLT, PJ não tem seguro-desemprego ou multa de 40% do FGTS. A estabilidade vem de criar seu próprio fundo de reserva.
-                </p>
-
-                <div className="space-y-4 mb-5">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Custo de Vida (R$)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
-                        <input 
-                          type="number" 
-                          value={livingCost || ''}
-                          placeholder={fallbackLivingCost.toString()}
-                          onChange={(e) => setFormState({ ...formState, livingCost: Number(e.target.value) })}
-                          className="w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder-slate-300 dark:placeholder-slate-600"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                        Alvo da Reserva (Meses)
-                      </label>
-                      <div className="relative">
-                        <input 
-                          type="number" 
-                          min="1"
-                          max="24"
-                          value={reserveMonths}
-                          onChange={(e) => setFormState({ ...formState, reserveMonths: Number(e.target.value) })}
-                          className="w-full pl-3 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      <span>Guardar da Sobra (%)</span>
-                      <span className="text-indigo-600 dark:text-indigo-400 font-bold">{savingsPercent}%</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="0" 
-                      max="100" 
-                      value={savingsPercent}
-                      onChange={(e) => setFormState({ ...formState, savingsPercent: Number(e.target.value) })}
-                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-indigo-600"
-                    />
-                  </div>
-                </div>
-
-                {monthlySurplus > 0 ? (
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
-                    <div className="flex justify-between items-end mb-3">
-                      <div>
-                        <p className="text-[11px] text-indigo-600 dark:text-indigo-400 uppercase font-semibold mb-0.5">Alvo Total</p>
-                        <p className="text-xl font-bold text-indigo-900 dark:text-indigo-100">{formatBRL(targetReserve)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[11px] text-indigo-600 dark:text-indigo-400 uppercase font-semibold mb-0.5">Aporte /mês</p>
-                        <p className="font-semibold text-indigo-900 dark:text-indigo-100">{formatBRL(monthlySavingsAmount)}</p>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-indigo-800 dark:text-indigo-300 leading-snug">
-                      {monthlySavingsAmount > 0 ? (
-                        <>Você construirá seu fundo equivalente a {reserveMonths} meses de custo de vida em <strong>{monthsToTarget} meses</strong>.</>
-                      ) : (
-                        <>Você não está guardando nada da sobra no momento.</>
-                      )}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-800/50">
-                    <p className="text-xs text-red-600 dark:text-red-400">Seu custo de vida atual é maior ou igual ao seu salário líquido. Não há sobras para investir na reserva.</p>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Export Buttons */}
               <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col items-center">
