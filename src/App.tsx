@@ -83,7 +83,13 @@ export default function App() {
     setExportError(null);
     try {
       const { exportPdf } = await import('./utils/exportPdf');
-      await exportPdf(result);
+      await exportPdf({
+        result,
+        formState,
+        safeNetIncome,
+        equivalentCLT,
+        monthlyReserveCost
+      });
     } catch {
       setExportError('Erro ao exportar PDF. Tente novamente.');
     } finally {
