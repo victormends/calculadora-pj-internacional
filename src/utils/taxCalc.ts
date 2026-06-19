@@ -19,13 +19,28 @@ export interface DeductionResult {
   companyType: CompanyType
   remittanceCost: number
   dasCost: number
+  accountingFee: number
   proLabore: number
   inssCost: number
   irrfCost: number
-  accountingFee: number          // pass-through for summation identity
-  totalDeductions: number        // must equal sum of all cost fields
+  totalDeductions: number
   netIncomeBrl: number
   effectiveTaxRate: number
+}
+
+/**
+ * Calcula o salário Bruto CLT equivalente para equiparar ao Líquido PJ.
+ * Considera: 13º, terço de férias, FGTS (8%) e R$ 1.500/mês de benefícios (VR, VA, Saúde, etc).
+ * Fórmula: Anual_PJ = Bruto_CLT * 13.33 * (0.76 + 0.08) + Benefícios_Anuais
+ */
+export function calcEquivalentCLT(netIncomeMonthlyBrl: number): number {
+  const annualNetPJ = netIncomeMonthlyBrl * 12
+  const annualBenefits = 1500 * 12 // Benefícios médios isentos
+  
+  // O coeficiente 11.2 vem de: 13.33 salários * 0.84 (76% líquido + 8% FGTS)
+  const equivalentGross = (annualNetPJ - annualBenefits) / 11.2
+  
+  return equivalentGross > 0 ? equivalentGross : 0
 }
 
 export function getCompanyType(annualGrossBrl: number): CompanyType {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { calcDeductions } from './utils/taxCalc';
+import { calcDeductions, calcEquivalentCLT } from './utils/taxCalc';
 import { useExchangeRate } from './hooks/useExchangeRate';
 import { useUrlState } from './hooks/useUrlState';
 import { useDarkMode } from './hooks/useDarkMode';
@@ -98,6 +98,8 @@ export default function App() {
     inssCost, irrfCost,
     netIncomeBrl, effectiveTaxRate
   } = result;
+
+  const equivalentCLT = calcEquivalentCLT(netIncomeBrl);
 
   const isMEI = companyType === 'MEI';
 
@@ -430,6 +432,12 @@ export default function App() {
                   <span>Líquido Anual:</span>
                   <span>{formatBRL(netIncomeBrl * 12)}</span>
                 </div>
+                {netIncomeBrl > 0 && (
+                  <div className="mt-3 pt-3 border-t border-emerald-200/60 dark:border-emerald-800/60 text-xs text-emerald-700/90 dark:text-emerald-300/80 flex items-start">
+                    <Info size={14} className="mr-1.5 mt-0.5 flex-shrink-0" />
+                    <span>Equivale a um salário <strong>Bruto CLT de {formatBRL(equivalentCLT)}</strong>, considerando 13º, férias, FGTS (8%) e ~R$1.5k/mês em benefícios VR/VA/Saúde.</span>
+                  </div>
+                )}
               </div>
 
               {/* Export Buttons */}
