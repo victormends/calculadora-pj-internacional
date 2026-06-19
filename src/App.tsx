@@ -43,10 +43,6 @@ const Spinner = ({ size, className }: IconProps) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`animate-spin ${className}`}><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
 );
 
-const initialParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-const initialRateParam = parseFloat(initialParams.get('rate') ?? '');
-const globalInitialUrlRate = isNaN(initialRateParam) ? null : initialRateParam;
-
 export default function App() {
   const { isDark, toggle: toggleDark } = useDarkMode();
   const { rate: liveRate, loading: rateLoading, lastUpdated, refresh: refreshRate } = useExchangeRate();
@@ -61,13 +57,12 @@ export default function App() {
 
   const { usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee } = formState;
 
-  // Track if we successfully used URL rate param, initializing from the global evaluation
-  const urlRateRef = useRef<number | null>(globalInitialUrlRate);
-
-  // Sync initial rate once loaded if user hasn't overridden
+  // Always sync live rate on load, ignoring any cached/bookmarked URL rates
+  const hasSyncedLiveRate = useRef(false);
   useEffect(() => {
-    if (!rateLoading && liveRate && urlRateRef.current === null) {
+    if (!rateLoading && liveRate && !hasSyncedLiveRate.current) {
        setFormState(s => ({ ...s, exchangeRate: liveRate }));
+       hasSyncedLiveRate.current = true;
     }
   }, [liveRate, rateLoading, setFormState]);
 
@@ -276,7 +271,6 @@ export default function App() {
                       {!isUsingLiveRate && liveRate && (
                         <button 
                           onClick={() => {
-                            urlRateRef.current = liveRate;
                             setFormState({ ...formState, exchangeRate: liveRate });
                           }}
                           className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
@@ -292,7 +286,6 @@ export default function App() {
                         step="0.01"
                         value={exchangeRate}
                         onChange={(e) => {
-                          urlRateRef.current = Number(e.target.value); // Prevent overwrite from late liveRate
                           setFormState({ ...formState, exchangeRate: Number(e.target.value) });
                         }}
                         className={`w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border ${isUsingLiveRate ? 'border-emerald-300 dark:border-emerald-600/50' : 'border-slate-300 dark:border-slate-600'} rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white`}
