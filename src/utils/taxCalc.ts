@@ -1,7 +1,7 @@
 export type CompanyType = 'MEI' | 'ME' | 'EPP' | 'OUT'
 
-// MEI ceiling corrected from 150,000 to 130,000
-export const MEI_CEILING = 130_000
+// MEI ceiling (kept at 81,000 to match current active legislation)
+export const MEI_CEILING = 81_000
 export const ME_CEILING  = 360_000
 export const EPP_CEILING = 4_800_000
 
@@ -57,18 +57,30 @@ export function getCompanyType(annualGrossBrl: number): CompanyType {
   return 'OUT'
 }
 
-// IRRF progressive table 2024/2025
-// Brackets: 2259.20 / 2826.65 / 3751.05 / 4664.68
+// IRRF progressive table 2025/2026 (MP 1.294/2025 & Lei 15.270/2025)
+// Brackets: 2428.80 / 2826.65 / 3751.05 / 4664.68
 // Rates: 0 / 7.5 / 15 / 22.5 / 27.5%
-// Deductions: 0 / 169.44 / 381.44 / 662.77 / 896.00
+// Deductions: 0 / 182.16 / 394.16 / 675.49 / 908.73
 export function calcIRRF(irrfBase: number): number {
+  if (irrfBase <= 5000) return 0 // Isenção total Lei 15.270/2025
+
   let cost: number
-  if      (irrfBase <= 2259.20) cost = 0
-  else if (irrfBase <= 2826.65) cost = irrfBase * 0.075  - 169.44
-  else if (irrfBase <= 3751.05) cost = irrfBase * 0.15   - 381.44
-  else if (irrfBase <= 4664.68) cost = irrfBase * 0.225  - 662.77
-  else                           cost = irrfBase * 0.275  - 896.00
-  return cost < 0 ? 0 : cost   // negative guard
+  if      (irrfBase <= 2428.80) cost = 0 // Coberto pela isenção acima, mas mantido na base
+  else if (irrfBase <= 2826.65) cost = irrfBase * 0.075  - 182.16
+  else if (irrfBase <= 3751.05) cost = irrfBase * 0.15   - 394.16
+  else if (irrfBase <= 4664.68) cost = irrfBase * 0.225  - 675.49
+  else                          cost = irrfBase * 0.275  - 908.73
+
+  cost = cost < 0 ? 0 : cost
+
+  // Redutor adicional Lei 15.270/2025 (Faixa 5.000 a 7.350)
+  if (irrfBase > 5000 && irrfBase <= 7350) {
+    const reducao = 978.62 - (0.133145 * irrfBase)
+    cost = cost - reducao
+    cost = cost < 0 ? 0 : cost
+  }
+
+  return cost
 }
 
 export function calcDeductions(params: CalcParams): DeductionResult {

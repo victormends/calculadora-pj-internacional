@@ -77,7 +77,7 @@ export function ResultsPanel({
           </div>
           
           <div className="flex justify-between text-red-500 dark:text-red-400 pt-1">
-            <span>(-) Taxa Plataforma ({remittanceFee}%):</span>
+            <span>(-) Taxa Remessa ({remittanceFee}%):</span>
             <span>- {formatBRL(remittanceCost)}</span>
           </div>
           

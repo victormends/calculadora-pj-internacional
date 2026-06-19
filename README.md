@@ -29,8 +29,9 @@ A calculadora hidrata automaticamente todos os campos a partir da query string, 
 - `fee`: Taxa de remessa em % (ex: 1.2)
 - `das`: Alíquota do Simples/DAS em % (ex: 6.0)
 - `acc`: Custo mensal da contabilidade (ex: 200)
+- `lc`: Custo mensal de vida / Living Cost (ex: 3000)
 
-**Exemplo:** `?usd=5000&rate=5.50&fee=1&das=6&acc=300`
+**Exemplo:** `?usd=5000&rate=5.50&fee=1&das=6&acc=300&lc=3000`
 
 ## 🏗️ Arquitetura e Fluxo de Dados
 
@@ -73,13 +74,13 @@ npm run build
 
 ## 📚 Transparência e Bases de Cálculo
 
-Para garantir total transparência sobre como a calculadora chega aos valores líquidos, aqui estão as regras de negócio e alíquotas fixadas no código (`src/utils/taxCalc.ts`), atualizadas com base no ano-calendário 2024/2025:
+Para garantir total transparência sobre como a calculadora chega aos valores líquidos, aqui estão as regras de negócio e alíquotas fixadas no código (`src/utils/taxCalc.ts`), atualizadas com a legislação vigente de 2025/2026:
 
-- **Teto de Enquadramento:** MEI (R$ 130k - teto ajustado/proposto), ME (R$ 360k) e EPP (R$ 4.8M).
-- **Fator R (Simples Nacional - Anexo III/V):** A calculadora assume o uso automático do Fator R, fixando o **Pró-Labore em 28%** do faturamento bruto mensal para garantir que a empresa seja tributada no Anexo III (alíquotas menores, a partir de 6%) em vez do Anexo V (a partir de 15,5%).
-- **INSS PF (Sócio-Administrador):** Retenção fixa de **11%** sobre o valor do Pró-Labore, que é a regra padrão para contribuintes individuais (sócios) no Simples Nacional.
-- **IRRF (Imposto de Renda PF):** Utiliza a **Tabela Progressiva Atualizada (2024/2025)**, com a faixa de isenção até R$ 2.259,20 e alíquotas subindo até 27,5% (com as respectivas parcelas a deduzir).
-- **Cálculo CLT Equivalente:** Assume um cenário realista onde o PJ trabalha apenas 11 meses (1 mês de descanso não remunerado), enquanto o CLT recebe 13,33 salários (incluindo férias e 13º) + FGTS de 8% + R$ 1.000 mensais de benefícios (VA/VR/Plano). 
+- **Teto de Enquadramento:** MEI mantido no limite oficial vigente de **R$ 81.000**. ME (R$ 360k) e EPP (R$ 4.8M).
+- **Fator R (Simples Nacional - Anexo III/V):** A calculadora assume o uso automático do Fator R, fixando o **Pró-Labore em 28%** do faturamento bruto mensal para garantir tributação no Anexo III (a partir de 6%) em vez do Anexo V.
+- **INSS PF (Sócio-Administrador):** Retenção fixa de **11%** sobre o valor do Pró-Labore.
+- **IRRF (Imposto de Renda PF):** Utiliza a **Tabela Progressiva Atualizada (MP 1.294/2025)**, com isenção efetiva até R$ 2.428,80. Também aplica rigorosamente o **redutor adicional da Lei 15.270/2025**, que zera o IRRF para rendimentos de até R$ 5.000,00 e aplica o redutor proporcional até R$ 7.350,00.
+- **Cálculo CLT Equivalente:** Assume um cenário realista (PJ 11 meses de receita vs CLT 13,33 salários + FGTS + R$ 1k de benefícios). 
 
 ## ⚠️ Aviso Legal (Disclaimer)
 
