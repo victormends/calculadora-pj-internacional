@@ -129,7 +129,7 @@ export function InputForm({
 
         <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
           <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Atividade (Simples Nacional)
+            Qual a sua área de atuação?
           </label>
           <select
             value={formState.taxRegime || 'custom'}
@@ -137,9 +137,9 @@ export function InputForm({
             disabled={isMEI}
             className="w-full px-3 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 dark:disabled:bg-slate-800/50 dark:text-white"
           >
-            <option value="anexo3" className="dark:bg-slate-800">Anexo III (Desenvolvimento/TI)</option>
-            <option value="anexo5" className="dark:bg-slate-800">Anexo V (Outros Serviços TI)</option>
-            <option value="custom" className="dark:bg-slate-800">Personalizado / Fixo</option>
+            <option value="anexo3" className="dark:bg-slate-800">Desenvolvimento, Suporte, Design (Anexo III)</option>
+            <option value="anexo5" className="dark:bg-slate-800">Consultoria, Engenharia (Anexo V)</option>
+            <option value="custom" className="dark:bg-slate-800">Personalizado (Digitar alíquota manualmente)</option>
           </select>
         </div>
 
