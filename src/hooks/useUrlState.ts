@@ -8,6 +8,7 @@ export interface FormState {
   taxRegime?: 'anexo3' | 'anexo5' | 'custom'
   accountingFee: number
   livingCost: number
+  enableSecurityReserve: boolean
 }
 
 export function useUrlState(defaults: FormState): [FormState, React.Dispatch<React.SetStateAction<FormState>>] {
@@ -21,6 +22,7 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
     const das  = parseFloat(params.get('das')  ?? '')
     const acc  = parseFloat(params.get('acc')  ?? '')
     const lc   = parseFloat(params.get('lc')   ?? '')
+    const sec  = params.get('sec')
     const regime = params.get('reg') as FormState['taxRegime'] | null
 
     return {
@@ -31,12 +33,13 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
       taxRegime:            regime      ? regime                        : defaults.taxRegime,
       accountingFee:        isNaN(acc)  ? defaults.accountingFee        : acc,
       livingCost:           isNaN(lc)   ? defaults.livingCost           : lc,
+      enableSecurityReserve: sec !== null ? sec === 'true' : defaults.enableSecurityReserve,
     }
   })
 
   useEffect(() => {
     // Skip replaceState if any value is invalid/NaN to avoid ?usd=NaN
-    const { usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, taxRegime } = state
+    const { usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, taxRegime, enableSecurityReserve } = state
     
     if ([usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost]
         .some(v => isNaN(v) || v === undefined || v === null)) return
@@ -48,6 +51,7 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
       das:  String(dasTaxPercent),
       acc:  String(accountingFee),
       lc:   String(livingCost),
+      sec:  String(enableSecurityReserve),
     })
     
     if (taxRegime) {

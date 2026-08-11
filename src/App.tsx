@@ -22,11 +22,12 @@ export default function App() {
     taxRegime: 'anexo3',
     accountingFee: 250,
     livingCost: 4000,
+    enableSecurityReserve: false,
   });
 
   const { 
     usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, 
-    dasTaxPercent: dasTax, taxRegime, accountingFee, livingCost
+    dasTaxPercent: dasTax, taxRegime, accountingFee, livingCost, enableSecurityReserve
   } = formState;
 
   // Always sync live rate on load, ignoring any cached/bookmarked URL rates
@@ -72,7 +73,7 @@ export default function App() {
   const isMEI = companyType === 'MEI';
   const actualLivingCost = livingCost > 0 ? livingCost : 4000;
   const targetReserve = actualLivingCost * 6; // Alvo de 6 meses de segurança
-  const monthlyReserveCost = targetReserve / 12; // Dividido nos 12 meses do 1º ano
+  const monthlyReserveCost = enableSecurityReserve ? targetReserve / 12 : 0; // Dividido nos 12 meses do 1º ano
   const safeNetIncome = Math.max(0, netIncomeBrl - monthlyReserveCost); // Líquido Disponível após investir na segurança
 
   const equivalentCLT = calcEquivalentCLT(safeNetIncome);

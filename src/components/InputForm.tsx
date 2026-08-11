@@ -8,6 +8,7 @@ export interface FormState {
   taxRegime?: 'anexo3' | 'anexo5' | 'custom';
   accountingFee: number;
   livingCost: number;
+  enableSecurityReserve: boolean;
 }
 
 interface InputFormProps {
@@ -181,19 +182,37 @@ export function InputForm({
         </div>
 
         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
-          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center">
-            Custo de Vida Mensal (R$)
-            <span className="text-[10px] text-slate-400 ml-1 font-normal">(p/ cálculo de segurança)</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
-            <input 
-              type="number" 
-              value={livingCost || ''}
-              placeholder="4000"
-              onChange={(e) => setFormState({ ...formState, livingCost: Number(e.target.value) })}
-              className="w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder-slate-300 dark:placeholder-slate-600"
-            />
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+              Calcular Fundo de Segurança
+            </label>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="sr-only peer"
+                checked={formState.enableSecurityReserve}
+                onChange={(e) => setFormState({ ...formState, enableSecurityReserve: e.target.checked })}
+              />
+              <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+            </label>
+          </div>
+          
+          <div className={`transition-opacity duration-200 ${!formState.enableSecurityReserve ? 'opacity-40 pointer-events-none' : ''}`}>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center">
+              Custo de Vida Mensal (R$)
+              <span className="text-[10px] text-slate-400 ml-1 font-normal">(p/ cálculo de 6 meses)</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
+              <input 
+                type="number" 
+                value={livingCost || ''}
+                placeholder="4000"
+                onChange={(e) => setFormState({ ...formState, livingCost: Number(e.target.value) })}
+                disabled={!formState.enableSecurityReserve}
+                className="w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder-slate-300 dark:placeholder-slate-600 disabled:bg-slate-50 dark:disabled:bg-slate-800/50"
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -124,11 +124,13 @@ export async function exportPdf({
   ];
 
   if (safeNetIncome > 0) {
-    summaryBody.push(
-      ['Fundo de Segurança (Mês 1º Ano)', `- ${formatBRL(monthlyReserveCost)}`],
-      ['Líquido Seguro Disponível', formatBRL(safeNetIncome)],
-      ['Salário CLT Equivalente', formatBRL(equivalentCLT)]
-    );
+    if (monthlyReserveCost > 0) {
+      summaryBody.push(
+        ['Fundo de Segurança (Mês 1º Ano)', `- ${formatBRL(monthlyReserveCost)}`],
+        ['Líquido Seguro Disponível', formatBRL(safeNetIncome)]
+      );
+    }
+    summaryBody.push(['Salário CLT Equivalente', formatBRL(equivalentCLT)]);
   }
 
   autoTable(doc, {
@@ -150,7 +152,7 @@ export async function exportPdf({
         data.cell.styles.textColor = indigo;
       }
       // Highlight Safe Net Income row
-      if (data.row.index === summaryBody.length - 2 && safeNetIncome > 0) {
+      if (data.row.index === summaryBody.length - 2 && safeNetIncome > 0 && monthlyReserveCost > 0) {
         data.cell.styles.textColor = emerald;
       }
     },

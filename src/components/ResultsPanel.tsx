@@ -114,21 +114,25 @@ export function ResultsPanel({
             <span>{formatBRL(netIncomeBrl)}</span>
           </div>
 
-          <div className="flex justify-between text-indigo-500 dark:text-indigo-400 font-medium pb-1">
-            <span>(-) Fundo de Segurança 1º Ano:</span>
-            <span>- {formatBRL(monthlyReserveCost)}</span>
-          </div>
+          {monthlyReserveCost > 0 && (
+            <>
+              <div className="flex justify-between mt-2 text-indigo-500 dark:text-indigo-400 font-medium pb-1">
+                <span>(-) Fundo de Segurança 1º Ano:</span>
+                <span>- {formatBRL(monthlyReserveCost)}</span>
+              </div>
 
-          <div className="flex justify-between pt-1 text-base font-bold text-emerald-600 dark:text-emerald-400 font-sans border-t border-slate-200 dark:border-slate-700">
-            <span>Líquido Disponível:</span>
-            <span>{formatBRL(safeNetIncome)}</span>
-          </div>
+              <div className="flex justify-between pt-1 text-base font-bold text-emerald-600 dark:text-emerald-400 font-sans border-t border-slate-200 dark:border-slate-700">
+                <span>Líquido Disponível:</span>
+                <span>{formatBRL(safeNetIncome)}</span>
+              </div>
+            </>
+          )}
 
           {safeNetIncome > 0 && (
             <div className="mt-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-emerald-700/90 dark:text-emerald-300/80 flex items-start leading-tight">
               <Info size={12} className="mr-1 mt-0.5 flex-shrink-0" />
               <span>Equivale a uma vaga <strong>CLT anunciada por {formatBRL(equivalentCLT)}/mês</strong>. 
-              (Cálculo assume PJ com 30 dias de férias não remuneradas, e <strong>já deduz {formatBRL(monthlyReserveCost)}/mês</strong> do líquido para montar o fundo de emergência de 6 meses no 1º ano).</span>
+              (Cálculo assume PJ com 30 dias de férias não remuneradas{monthlyReserveCost > 0 ? `, e já deduz ${formatBRL(monthlyReserveCost)}/mês do líquido para montar o fundo de emergência de 6 meses no 1º ano` : ''}).</span>
             </div>
           )}
         </div>
