@@ -5,6 +5,7 @@ export interface FormState {
   exchangeRate: number;
   remittanceFeePercent: number;
   dasTaxPercent: number;
+  taxRegime?: 'anexo3' | 'anexo5' | 'custom';
   accountingFee: number;
   livingCost: number;
 }
@@ -17,6 +18,7 @@ interface InputFormProps {
   isUsingLiveRate: boolean;
   liveRate: number | null;
   isMEI: boolean;
+  computedDasTax?: number;
 }
 
 export function InputForm({
@@ -27,6 +29,7 @@ export function InputForm({
   isUsingLiveRate,
   liveRate,
   isMEI,
+  computedDasTax,
 }: InputFormProps) {
   const { usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee, livingCost } = formState;
 
@@ -124,7 +127,23 @@ export function InputForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
+          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Atividade (Simples Nacional)
+          </label>
+          <select
+            value={formState.taxRegime || 'custom'}
+            onChange={(e) => setFormState({ ...formState, taxRegime: e.target.value as FormState['taxRegime'] })}
+            disabled={isMEI}
+            className="w-full px-3 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 dark:disabled:bg-slate-800/50 dark:text-white"
+          >
+            <option value="anexo3" className="dark:bg-slate-800">Anexo III (Desenvolvimento/TI)</option>
+            <option value="anexo5" className="dark:bg-slate-800">Anexo V (Outros Serviços TI)</option>
+            <option value="custom" className="dark:bg-slate-800">Personalizado / Fixo</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 pt-2">
           <div className={isMEI ? 'opacity-50' : ''}>
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
               Alíquota DAS (%)
@@ -133,15 +152,15 @@ export function InputForm({
               <input 
                 type="number" 
                 step="0.01"
-                value={dasTax}
+                value={formState.taxRegime !== 'custom' && formState.taxRegime !== undefined && computedDasTax !== undefined ? computedDasTax.toFixed(2) : dasTax}
                 onChange={(e) => setFormState({ ...formState, dasTaxPercent: Number(e.target.value) })}
-                disabled={isMEI}
-                className="w-full pl-3 pr-6 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 dark:disabled:bg-slate-800/50 dark:text-white"
+                disabled={isMEI || (formState.taxRegime !== 'custom' && formState.taxRegime !== undefined)}
+                className="w-full pl-3 pr-6 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-100 dark:disabled:bg-slate-800/50 dark:text-white disabled:text-slate-500"
               />
               <span className="absolute right-2.5 top-2 text-slate-400 text-sm">%</span>
             </div>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
-              {isMEI ? 'MEI: Valor fixo' : 'Isenção ISS/PIS (Geralmente 3.05%)'}
+              {isMEI ? 'MEI: Valor fixo' : (formState.taxRegime !== 'custom' && formState.taxRegime !== undefined) ? 'Calculado pela receita anual' : 'Isenção ISS/PIS (Geralmente 3.05%)'}
             </p>
           </div>
 

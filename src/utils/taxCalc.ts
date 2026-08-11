@@ -5,11 +5,14 @@ export const MEI_CEILING = 81_000
 export const ME_CEILING  = 360_000
 export const EPP_CEILING = 4_800_000
 
+export type TaxRegime = 'anexo3' | 'anexo5' | 'custom'
+
 export interface CalcParams {
   usdSalary: number
   exchangeRate: number
   remittanceFeePercent: number   // e.g. 1.5 = 1.5%
-  dasTaxPercent: number          // e.g. 6.0 = 6.0%
+  dasTaxPercent: number          // used if taxRegime is 'custom'
+  taxRegime?: TaxRegime          // defaults to 'custom' if undefined for backward compat
   accountingFee: number          // fixed BRL amount
 }
 
@@ -57,6 +60,38 @@ export function getCompanyType(annualGrossBrl: number): CompanyType {
   return 'OUT'
 }
 
+/**
+ * Calcula a alíquota efetiva do Simples Nacional com base no faturamento anualizado
+ */
+export function calcSimplesNacionalRate(annualGrossBrl: number, regime: TaxRegime): number {
+  if (regime === 'custom') return 0;
+  
+  let nominalRate = 0;
+  let deduction = 0;
+
+  if (regime === 'anexo3') {
+    if      (annualGrossBrl <= 180_000)   { nominalRate = 0.060; deduction = 0; }
+    else if (annualGrossBrl <= 360_000)   { nominalRate = 0.112; deduction = 9360; }
+    else if (annualGrossBrl <= 720_000)   { nominalRate = 0.135; deduction = 17640; }
+    else if (annualGrossBrl <= 1_800_000) { nominalRate = 0.160; deduction = 35640; }
+    else if (annualGrossBrl <= 3_600_000) { nominalRate = 0.210; deduction = 125640; }
+    else                                  { nominalRate = 0.330; deduction = 648000; }
+  } else if (regime === 'anexo5') {
+    if      (annualGrossBrl <= 180_000)   { nominalRate = 0.155; deduction = 0; }
+    else if (annualGrossBrl <= 360_000)   { nominalRate = 0.180; deduction = 4500; }
+    else if (annualGrossBrl <= 720_000)   { nominalRate = 0.195; deduction = 9900; }
+    else if (annualGrossBrl <= 1_800_000) { nominalRate = 0.205; deduction = 17100; }
+    else if (annualGrossBrl <= 3_600_000) { nominalRate = 0.230; deduction = 62100; }
+    else                                  { nominalRate = 0.305; deduction = 540000; }
+  }
+
+  // Alíquota Efetiva = (Faturamento Anual * Alíquota Nominal - Parcela a Deduzir) / Faturamento Anual
+  const effectiveRate = ((annualGrossBrl * nominalRate) - deduction) / annualGrossBrl;
+  
+  // Garantir que não seja negativa (não ocorre na prática na tabela do SN, mas por segurança)
+  return Math.max(0, effectiveRate * 100);
+}
+
 // IRRF progressive table 2025/2026 (MP 1.294/2025 & Lei 15.270/2025)
 // Brackets: 2428.80 / 2826.65 / 3751.05 / 4664.68
 // Rates: 0 / 7.5 / 15 / 22.5 / 27.5%
@@ -85,7 +120,7 @@ export function calcIRRF(irrfBase: number): number {
 
 export function calcDeductions(params: CalcParams): DeductionResult {
   const { usdSalary, exchangeRate, remittanceFeePercent,
-          dasTaxPercent, accountingFee } = params
+          dasTaxPercent, taxRegime = 'custom', accountingFee } = params
 
   const grossBrl        = usdSalary * exchangeRate
   const annualGrossBrl  = grossBrl * 12
@@ -94,7 +129,13 @@ export function calcDeductions(params: CalcParams): DeductionResult {
   const isMEI           = companyType === 'MEI'
 
   const remittanceCost  = grossBrl * (remittanceFeePercent / 100)
-  const dasCost         = isMEI ? 75.60 : grossBrl * (dasTaxPercent / 100)
+
+  let finalDasPercent = dasTaxPercent
+  if (!isMEI && taxRegime !== 'custom') {
+    finalDasPercent = calcSimplesNacionalRate(annualGrossBrl, taxRegime)
+  }
+
+  const dasCost         = isMEI ? 75.60 : grossBrl * (finalDasPercent / 100)
   const proLabore       = isMEI ? 0 : grossBrl * 0.28
   const inssCost        = isMEI ? 0 : proLabore * 0.11
   const irrfBase        = isMEI ? 0 : proLabore - inssCost

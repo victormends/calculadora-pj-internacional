@@ -19,13 +19,14 @@ export default function App() {
     exchangeRate: 5.50,
     remittanceFeePercent: 2.0, // 2% Payoneer
     dasTaxPercent: 3.05, // 3.05% a 4%
+    taxRegime: 'anexo3',
     accountingFee: 250,
     livingCost: 4000,
   });
 
   const { 
     usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, 
-    dasTaxPercent: dasTax, accountingFee, livingCost
+    dasTaxPercent: dasTax, taxRegime, accountingFee, livingCost
   } = formState;
 
   // Always sync live rate on load, ignoring any cached/bookmarked URL rates
@@ -54,6 +55,7 @@ export default function App() {
     exchangeRate,
     remittanceFeePercent: remittanceFee,
     dasTaxPercent: dasTax,
+    taxRegime,
     accountingFee
   });
 
@@ -63,6 +65,8 @@ export default function App() {
     inssCost, irrfCost,
     netIncomeBrl, effectiveTaxRate
   } = result;
+  
+  const computedDasTax = grossBrl > 0 ? (dasCost / grossBrl) * 100 : 0;
 
   // Lógica de Segurança (Reserva de Emergência no 1º Ano)
   const isMEI = companyType === 'MEI';
@@ -139,6 +143,7 @@ export default function App() {
               isUsingLiveRate={isUsingLiveRate}
               liveRate={liveRate}
               isMEI={isMEI}
+              computedDasTax={computedDasTax}
             />
           </div>
 

@@ -84,9 +84,10 @@ export async function exportPdf({
 
   // Deduções
   const isMEI = result.companyType === 'MEI';
+  const appliedDasPercent = (result.grossBrl > 0 && !isMEI) ? (result.dasCost / result.grossBrl) * 100 : formState.dasTaxPercent;
   const deductionsBody = [
     ['Taxa de Plataforma / Remessa', `(${formState.remittanceFeePercent}%)`, `- ${formatBRL(result.remittanceCost)}`],
-    ['Imposto PJ (DAS)', isMEI ? '(Fixo)' : `(${formState.dasTaxPercent}%)`, `- ${formatBRL(result.dasCost)}`],
+    ['Imposto PJ (DAS)', isMEI ? '(Fixo)' : `(${appliedDasPercent.toFixed(2)}%)`, `- ${formatBRL(result.dasCost)}`],
     ['Contabilidade', '', `- ${formatBRL(result.accountingFee)}`],
   ];
 

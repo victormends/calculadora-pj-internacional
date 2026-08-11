@@ -5,6 +5,7 @@ export interface FormState {
   exchangeRate: number
   remittanceFeePercent: number
   dasTaxPercent: number
+  taxRegime?: 'anexo3' | 'anexo5' | 'custom'
   accountingFee: number
   livingCost: number
 }
@@ -20,12 +21,14 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
     const das  = parseFloat(params.get('das')  ?? '')
     const acc  = parseFloat(params.get('acc')  ?? '')
     const lc   = parseFloat(params.get('lc')   ?? '')
+    const regime = params.get('reg') as FormState['taxRegime'] | null
 
     return {
       usdSalary:            isNaN(usd)  ? defaults.usdSalary            : usd,
       exchangeRate:         isNaN(rate) ? defaults.exchangeRate         : rate,
       remittanceFeePercent: isNaN(fee)  ? defaults.remittanceFeePercent : fee,
       dasTaxPercent:        isNaN(das)  ? defaults.dasTaxPercent        : das,
+      taxRegime:            regime      ? regime                        : defaults.taxRegime,
       accountingFee:        isNaN(acc)  ? defaults.accountingFee        : acc,
       livingCost:           isNaN(lc)   ? defaults.livingCost           : lc,
     }
@@ -33,7 +36,7 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
 
   useEffect(() => {
     // Skip replaceState if any value is invalid/NaN to avoid ?usd=NaN
-    const { usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost } = state
+    const { usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, taxRegime } = state
     
     if ([usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost]
         .some(v => isNaN(v) || v === undefined || v === null)) return
@@ -46,6 +49,10 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
       acc:  String(accountingFee),
       lc:   String(livingCost),
     })
+    
+    if (taxRegime) {
+      params.append('reg', taxRegime)
+    }
 
     window.history.replaceState(null, '', '?' + params.toString())
   }, [state])
