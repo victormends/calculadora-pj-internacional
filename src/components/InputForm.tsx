@@ -86,7 +86,7 @@ export function InputForm({
                       newJobs[idx] = { ...newJobs[idx], amount: Number(e.target.value) };
                       setFormState({ ...formState, jobs: newJobs });
                     }}
-                    className="w-full pl-6 pr-1 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white"
+                    className={`w-full ${job.currency === 'USD' ? 'pl-6' : 'pl-8'} pr-1 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white`}
                   />
                 </div>
               </div>
@@ -103,7 +103,7 @@ export function InputForm({
                       newJobs[idx] = { ...newJobs[idx], amount: Number(e.target.value) / 12 };
                       setFormState({ ...formState, jobs: newJobs });
                     }}
-                    className="w-full pl-6 pr-1 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white"
+                    className={`w-full ${job.currency === 'USD' ? 'pl-6' : 'pl-8'} pr-1 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white`}
                   />
                 </div>
               </div>
