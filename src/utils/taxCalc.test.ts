@@ -40,7 +40,8 @@ describe('calcIRRF', () => {
 describe('calcDeductions', () => {
   const baseParams = {
     jobs: [{ amount: 5000, currency: 'USD' as const }],
-    exchangeRate: 5.0,
+    usdExchangeRate: 5.0,
+    eurExchangeRate: 5.5,
     remittanceFeePercent: 1.0,
     dasTaxPercent: 6.0,
     accountingFee: 500

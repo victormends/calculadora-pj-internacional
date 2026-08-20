@@ -8,8 +8,9 @@ export const EPP_CEILING = 4_800_000
 export type TaxRegime = 'anexo3' | 'anexo5' | 'custom'
 
 export interface CalcParams {
-  jobs: { amount: number, currency: 'USD' | 'BRL' }[]
-  exchangeRate: number
+  jobs: { amount: number, currency: 'USD' | 'EUR' | 'BRL' }[]
+  usdExchangeRate: number
+  eurExchangeRate: number
   remittanceFeePercent: number   // e.g. 1.5 = 1.5%
   dasTaxPercent: number          // used if taxRegime is 'custom'
   taxRegime?: TaxRegime          // defaults to 'custom' if undefined for backward compat
@@ -119,18 +120,28 @@ export function calcIRRF(irrfBase: number): number {
 }
 
 export function calcDeductions(params: CalcParams): DeductionResult {
-  const { jobs, exchangeRate, remittanceFeePercent,
+  const { jobs, usdExchangeRate, eurExchangeRate, remittanceFeePercent,
           dasTaxPercent, taxRegime = 'custom', accountingFee } = params
 
-  const grossBrl        = jobs.reduce((acc, job) => acc + job.amount * (job.currency === 'USD' ? exchangeRate : 1), 0)
-  const usdGrossBrl     = jobs.reduce((acc, job) => acc + (job.currency === 'USD' ? job.amount * exchangeRate : 0), 0)
+  const grossBrl = jobs.reduce((acc, job) => {
+    let rate = 1;
+    if (job.currency === 'USD') rate = usdExchangeRate;
+    if (job.currency === 'EUR') rate = eurExchangeRate;
+    return acc + job.amount * rate;
+  }, 0);
+
+  const foreignGrossBrl = jobs.reduce((acc, job) => {
+    if (job.currency === 'USD') return acc + job.amount * usdExchangeRate;
+    if (job.currency === 'EUR') return acc + job.amount * eurExchangeRate;
+    return acc;
+  }, 0);
   
   const annualGrossBrl  = grossBrl * 12
   const companyType     = getCompanyType(annualGrossBrl)
 
   const isMEI           = companyType === 'MEI'
 
-  const remittanceCost  = usdGrossBrl * (remittanceFeePercent / 100)
+  const remittanceCost  = foreignGrossBrl * (remittanceFeePercent / 100)
 
   let finalDasPercent = dasTaxPercent
   if (!isMEI && taxRegime !== 'custom') {

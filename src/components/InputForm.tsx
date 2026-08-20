@@ -3,7 +3,8 @@ import type { Job } from '../hooks/useUrlState';
 
 export interface FormState {
   jobs: Job[];
-  exchangeRate: number;
+  usdExchangeRate: number;
+  eurExchangeRate: number;
   remittanceFeePercent: number;
   dasTaxPercent: number;
   taxRegime?: 'anexo3' | 'anexo5' | 'custom';
@@ -18,7 +19,8 @@ interface InputFormProps {
   handleCopyLink: () => void;
   copied: boolean;
   isUsingLiveRate: boolean;
-  liveRate: number | null;
+  liveUsdRate: number | null;
+  liveEurRate: number | null;
   isMEI: boolean;
   computedDasTax?: number;
 }
@@ -29,11 +31,12 @@ export function InputForm({
   handleCopyLink,
   copied,
   isUsingLiveRate,
-  liveRate,
+  liveUsdRate,
+  liveEurRate,
   isMEI,
   computedDasTax,
 }: InputFormProps) {
-  const { exchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee, livingCost } = formState;
+  const { usdExchangeRate, eurExchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee, livingCost } = formState;
 
   return (
     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
@@ -70,6 +73,7 @@ export function InputForm({
                   className="w-full px-1 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-slate-600 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500"
                 >
                   <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
                   <option value="BRL">BRL</option>
                 </select>
               </div>
@@ -77,7 +81,7 @@ export function InputForm({
               <div className="flex-1">
                 {idx === 0 && <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Mensal</label>}
                 <div className="relative">
-                  <span className="absolute left-2.5 top-2 text-slate-400 text-sm">{job.currency === 'USD' ? '$' : 'R$'}</span>
+                  <span className="absolute left-2.5 top-2 text-slate-400 text-sm">{job.currency === 'USD' ? '$' : job.currency === 'EUR' ? '€' : 'R$'}</span>
                   <input
                     type="number"
                     value={job.amount ? parseFloat(job.amount.toFixed(2)) : ''}
@@ -86,7 +90,7 @@ export function InputForm({
                       newJobs[idx] = { ...newJobs[idx], amount: Number(e.target.value) };
                       setFormState({ ...formState, jobs: newJobs });
                     }}
-                    className={`w-full ${job.currency === 'USD' ? 'pl-6' : 'pl-8'} pr-1 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white`}
+                    className={`w-full ${job.currency === 'BRL' ? 'pl-8' : 'pl-6'} pr-1 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white`}
                   />
                 </div>
               </div>
@@ -94,7 +98,7 @@ export function InputForm({
               <div className="flex-1">
                 {idx === 0 && <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Anual</label>}
                 <div className="relative">
-                  <span className="absolute left-2.5 top-2 text-slate-400 text-sm">{job.currency === 'USD' ? '$' : 'R$'}</span>
+                  <span className="absolute left-2.5 top-2 text-slate-400 text-sm">{job.currency === 'USD' ? '$' : job.currency === 'EUR' ? '€' : 'R$'}</span>
                   <input
                     type="number"
                     value={job.amount ? parseFloat((job.amount * 12).toFixed(2)) : ''}
@@ -103,7 +107,7 @@ export function InputForm({
                       newJobs[idx] = { ...newJobs[idx], amount: Number(e.target.value) / 12 };
                       setFormState({ ...formState, jobs: newJobs });
                     }}
-                    className={`w-full ${job.currency === 'USD' ? 'pl-6' : 'pl-8'} pr-1 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white`}
+                    className={`w-full ${job.currency === 'BRL' ? 'pl-8' : 'pl-6'} pr-1 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white`}
                   />
                 </div>
               </div>
@@ -140,33 +144,65 @@ export function InputForm({
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex justify-between">
-              <span>Cotação Dólar (R$)</span>
-              {!isUsingLiveRate && liveRate && (
-                <button 
-                  onClick={() => {
-                    setFormState({ ...formState, exchangeRate: liveRate });
+          {formState.jobs.some(j => j.currency === 'USD') && (
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex justify-between">
+                <span>Cotação Dólar (R$)</span>
+                {!isUsingLiveRate && liveUsdRate && (
+                  <button 
+                    onClick={() => {
+                      setFormState({ ...formState, usdExchangeRate: liveUsdRate, eurExchangeRate: liveEurRate || formState.eurExchangeRate });
+                    }}
+                    className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  >
+                    Usar atual ({liveUsdRate.toFixed(2)})
+                  </button>
+                )}
+              </label>
+              <div className="relative">
+                <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  value={usdExchangeRate}
+                  onChange={(e) => {
+                    setFormState({ ...formState, usdExchangeRate: Number(e.target.value) });
                   }}
-                  className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
-                >
-                  Usar atual ({liveRate.toFixed(2)})
-                </button>
-              )}
-            </label>
-            <div className="relative">
-              <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
-              <input 
-                type="number" 
-                step="0.01"
-                value={exchangeRate}
-                onChange={(e) => {
-                  setFormState({ ...formState, exchangeRate: Number(e.target.value) });
-                }}
-                className={`w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border ${isUsingLiveRate ? 'border-emerald-300 dark:border-emerald-600/50' : 'border-slate-300 dark:border-slate-600'} rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white`}
-              />
+                  className={`w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border ${isUsingLiveRate ? 'border-emerald-300 dark:border-emerald-600/50' : 'border-slate-300 dark:border-slate-600'} rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white`}
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {formState.jobs.some(j => j.currency === 'EUR') && (
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 flex justify-between">
+                <span>Cotação Euro (R$)</span>
+                {!isUsingLiveRate && liveEurRate && (
+                  <button 
+                    onClick={() => {
+                      setFormState({ ...formState, eurExchangeRate: liveEurRate, usdExchangeRate: liveUsdRate || formState.usdExchangeRate });
+                    }}
+                    className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  >
+                    Usar atual ({liveEurRate.toFixed(2)})
+                  </button>
+                )}
+              </label>
+              <div className="relative">
+                <span className="absolute left-2.5 top-2 text-slate-400 text-sm">R$</span>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  value={eurExchangeRate}
+                  onChange={(e) => {
+                    setFormState({ ...formState, eurExchangeRate: Number(e.target.value) });
+                  }}
+                  className={`w-full pl-8 pr-2 py-1.5 text-sm bg-transparent border ${isUsingLiveRate ? 'border-emerald-300 dark:border-emerald-600/50' : 'border-slate-300 dark:border-slate-600'} rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white`}
+                />
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">

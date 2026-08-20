@@ -12,11 +12,12 @@ import { ExportButtons } from './components/ExportButtons';
 
 export default function App() {
   const { isDark, toggle: toggleDark } = useDarkMode();
-  const { rate: liveRate, loading: rateLoading, lastUpdated, refresh: refreshRate } = useExchangeRate();
+  const { usdRate: liveUsdRate, eurRate: liveEurRate, loading: rateLoading, lastUpdated, refresh: refreshRate } = useExchangeRate();
 
   const [formState, setFormState] = useUrlState({
     jobs: [{ id: 'job-1', amount: 2500, currency: 'USD' }],
-    exchangeRate: 5.50,
+    usdExchangeRate: 5.50,
+    eurExchangeRate: 6.00,
     remittanceFeePercent: 2.0, // 2% Payoneer
     dasTaxPercent: 3.05, // 3.05% a 4%
     taxRegime: 'anexo3',
@@ -26,18 +27,18 @@ export default function App() {
   });
 
   const { 
-    jobs, exchangeRate, remittanceFeePercent: remittanceFee, 
+    jobs, usdExchangeRate, eurExchangeRate, remittanceFeePercent: remittanceFee, 
     dasTaxPercent: dasTax, taxRegime, accountingFee, livingCost, enableSecurityReserve
   } = formState;
 
   // Always sync live rate on load, ignoring any cached/bookmarked URL rates
   const hasSyncedLiveRate = useRef(false);
   useEffect(() => {
-    if (!rateLoading && liveRate && !hasSyncedLiveRate.current) {
-       setFormState(s => ({ ...s, exchangeRate: liveRate }));
+    if (!rateLoading && liveUsdRate && liveEurRate && !hasSyncedLiveRate.current) {
+       setFormState(s => ({ ...s, usdExchangeRate: liveUsdRate, eurExchangeRate: liveEurRate }));
        hasSyncedLiveRate.current = true;
     }
-  }, [liveRate, rateLoading, setFormState]);
+  }, [liveUsdRate, liveEurRate, rateLoading, setFormState]);
 
   const [copied, setCopied] = useState(false);
   const handleCopyLink = () => {
@@ -53,7 +54,8 @@ export default function App() {
   // Lógica de Cálculo
   const result = calcDeductions({
     jobs,
-    exchangeRate,
+    usdExchangeRate,
+    eurExchangeRate,
     remittanceFeePercent: remittanceFee,
     dasTaxPercent: dasTax,
     taxRegime,
@@ -115,7 +117,9 @@ export default function App() {
     }
   }
 
-  const isUsingLiveRate = liveRate ? Math.abs(exchangeRate - liveRate) < 0.001 : false;
+  const isUsingLiveRate = (liveUsdRate ? Math.abs(usdExchangeRate - liveUsdRate) < 0.001 : true) && 
+                          (liveEurRate ? Math.abs(eurExchangeRate - liveEurRate) < 0.001 : true) &&
+                          (liveUsdRate !== null || liveEurRate !== null);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-2 md:p-4 font-sans text-slate-800 dark:text-slate-200 transition-colors flex flex-col justify-center">
@@ -142,7 +146,8 @@ export default function App() {
               handleCopyLink={handleCopyLink}
               copied={copied}
               isUsingLiveRate={isUsingLiveRate}
-              liveRate={liveRate}
+              liveUsdRate={liveUsdRate}
+              liveEurRate={liveEurRate}
               isMEI={isMEI}
               computedDasTax={computedDasTax}
             />

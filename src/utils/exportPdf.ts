@@ -5,6 +5,7 @@ import type { FormState } from '../components/InputForm';
 
 const formatBRL = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 const formatUSD = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+const formatEUR = (value: number) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(value);
 
 export interface ExportPdfParams {
   result: DeductionResult;
@@ -48,6 +49,9 @@ export async function exportPdf({
 
   yPos += 15;
 
+  const hasUSD = formState.jobs.some(j => j.currency === 'USD');
+  const hasEUR = formState.jobs.some(j => j.currency === 'EUR');
+
   // Parâmetros Base
   autoTable(doc, {
     startY: yPos,
@@ -55,9 +59,10 @@ export async function exportPdf({
     body: [
       ...formState.jobs.map((job, idx) => [
         `Emprego ${idx + 1} (${job.currency})`,
-        job.currency === 'USD' ? formatUSD(job.amount) : formatBRL(job.amount)
+        job.currency === 'USD' ? formatUSD(job.amount) : job.currency === 'EUR' ? formatEUR(job.amount) : formatBRL(job.amount)
       ]),
-      ['Cotação Aplicada (BRL)', `R$ ${formState.exchangeRate.toFixed(2)}`],
+      ...(hasUSD ? [['Cotação USD Aplicada (BRL)', `R$ ${formState.usdExchangeRate.toFixed(2)}`]] : []),
+      ...(hasEUR ? [['Cotação EUR Aplicada (BRL)', `R$ ${formState.eurExchangeRate.toFixed(2)}`]] : []),
       ['Custo de Vida Declarado', formatBRL(formState.livingCost)],
     ],
     theme: 'plain',

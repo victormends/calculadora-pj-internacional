@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 
 export interface RateState {
-  rate: number
+  usdRate: number
+  eurRate: number
   loading: boolean
   lastUpdated: string | null   // "HH:MM" local time
   isLive: boolean
@@ -9,23 +10,27 @@ export interface RateState {
   refresh: () => void
 }
 
-const FALLBACK_RATE = 5.50
-const ENDPOINT = 'https://economia.awesomeapi.com.br/json/last/USD-BRL'
+const FALLBACK_USD_RATE = 5.50
+const FALLBACK_EUR_RATE = 6.00
+const ENDPOINT = 'https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL'
 
-async function fetchRate(): Promise<number> {
+async function fetchRates(): Promise<{usd: number, eur: number}> {
   const res  = await fetch(ENDPOINT)
   if (!res.ok) throw new Error('Network error')
   const data = await res.json()
-  const raw  = parseFloat(data?.USDBRL?.bid)
   
-  if (isNaN(raw) || raw <= 0 || raw > 50) {
-    throw new Error(`Unexpected rate value: ${data?.USDBRL?.bid}`)
+  const rawUsd  = parseFloat(data?.USDBRL?.bid)
+  const rawEur  = parseFloat(data?.EURBRL?.bid)
+  
+  if (isNaN(rawUsd) || rawUsd <= 0 || rawUsd > 50 || isNaN(rawEur) || rawEur <= 0 || rawEur > 50) {
+    throw new Error('Unexpected rate value')
   }
-  return raw
+  return { usd: rawUsd, eur: rawEur }
 }
 
 export function useExchangeRate(): RateState {
-  const [rate, setRate] = useState(FALLBACK_RATE)
+  const [usdRate, setUsdRate] = useState(FALLBACK_USD_RATE)
+  const [eurRate, setEurRate] = useState(FALLBACK_EUR_RATE)
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [isLive, setIsLive] = useState(false)
@@ -35,15 +40,17 @@ export function useExchangeRate(): RateState {
     setLoading(true)
     setError(null)
     try {
-      const fetchedRate = await fetchRate()
-      setRate(fetchedRate)
+      const fetchedRates = await fetchRates()
+      setUsdRate(fetchedRates.usd)
+      setEurRate(fetchedRates.eur)
       setIsLive(true)
       const now = new Date()
       setLastUpdated(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`)
     } catch (err: any) {
-      setRate(FALLBACK_RATE)
+      setUsdRate(FALLBACK_USD_RATE)
+      setEurRate(FALLBACK_EUR_RATE)
       setIsLive(false)
-      setError(err.message || 'Error fetching rate')
+      setError(err.message || 'Error fetching rates')
     } finally {
       setLoading(false)
     }
@@ -53,5 +60,5 @@ export function useExchangeRate(): RateState {
     refresh()
   }, [refresh])
 
-  return { rate, loading, lastUpdated, isLive, error, refresh }
+  return { usdRate, eurRate, loading, lastUpdated, isLive, error, refresh }
 }

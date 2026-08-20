@@ -3,12 +3,13 @@ import { useState, useEffect } from 'react'
 export interface Job {
   id: string;
   amount: number;
-  currency: 'USD' | 'BRL';
+  currency: 'USD' | 'EUR' | 'BRL';
 }
 
 export interface FormState {
   jobs: Job[];
-  exchangeRate: number
+  usdExchangeRate: number
+  eurExchangeRate: number
   remittanceFeePercent: number
   dasTaxPercent: number
   taxRegime?: 'anexo3' | 'anexo5' | 'custom'
@@ -23,6 +24,7 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
     const params = new URLSearchParams(window.location.search)
     
     const rate = parseFloat(params.get('rate') ?? '')
+    const eurRate = parseFloat(params.get('eurRate') ?? '')
     const fee  = parseFloat(params.get('fee')  ?? '')
     const das  = parseFloat(params.get('das')  ?? '')
     const acc  = parseFloat(params.get('acc')  ?? '')
@@ -35,12 +37,12 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
     // Check for new format (j1, c1, j2, c2, j3, c3)
     for (let i = 1; i <= 3; i++) {
       const jAmt = parseFloat(params.get(`j${i}`) ?? '')
-      const jCur = params.get(`c${i}`) as 'USD' | 'BRL' | null
+      const jCur = params.get(`c${i}`) as 'USD' | 'EUR' | 'BRL' | null
       if (!isNaN(jAmt)) {
         initialJobs.push({
           id: `url-job-${i}`,
           amount: jAmt,
-          currency: jCur === 'BRL' ? 'BRL' : 'USD'
+          currency: jCur === 'BRL' ? 'BRL' : jCur === 'EUR' ? 'EUR' : 'USD'
         })
       }
     }
@@ -57,7 +59,8 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
 
     return {
       jobs:                 initialJobs,
-      exchangeRate:         isNaN(rate) ? defaults.exchangeRate         : rate,
+      usdExchangeRate:      isNaN(rate) ? defaults.usdExchangeRate      : rate,
+      eurExchangeRate:      isNaN(eurRate) ? defaults.eurExchangeRate   : eurRate,
       remittanceFeePercent: isNaN(fee)  ? defaults.remittanceFeePercent : fee,
       dasTaxPercent:        isNaN(das)  ? defaults.dasTaxPercent        : das,
       taxRegime:            regime      ? regime                        : defaults.taxRegime,
@@ -68,13 +71,14 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
   })
 
   useEffect(() => {
-    const { jobs, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, taxRegime, enableSecurityReserve } = state
+    const { jobs, usdExchangeRate, eurExchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, taxRegime, enableSecurityReserve } = state
     
-    if ([exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost]
+    if ([usdExchangeRate, eurExchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost]
         .some(v => isNaN(v) || v === undefined || v === null)) return
 
     const params = new URLSearchParams({
-      rate: String(exchangeRate),
+      rate: String(usdExchangeRate),
+      eurRate: String(eurExchangeRate),
       fee:  String(remittanceFeePercent),
       das:  String(dasTaxPercent),
       acc:  String(accountingFee),
