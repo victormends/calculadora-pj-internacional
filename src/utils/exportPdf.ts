@@ -53,7 +53,10 @@ export async function exportPdf({
     startY: yPos,
     head: [['Parâmetros Base', 'Valor']],
     body: [
-      ['Faturamento Mensal (USD)', formatUSD(formState.usdSalary)],
+      ...formState.jobs.map((job, idx) => [
+        `Emprego ${idx + 1} (${job.currency})`,
+        job.currency === 'USD' ? formatUSD(job.amount) : formatBRL(job.amount)
+      ]),
       ['Cotação Aplicada (BRL)', `R$ ${formState.exchangeRate.toFixed(2)}`],
       ['Custo de Vida Declarado', formatBRL(formState.livingCost)],
     ],

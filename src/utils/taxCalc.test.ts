@@ -39,7 +39,7 @@ describe('calcIRRF', () => {
 
 describe('calcDeductions', () => {
   const baseParams = {
-    usdSalary: 5000,
+    jobs: [{ amount: 5000, currency: 'USD' as const }],
     exchangeRate: 5.0,
     remittanceFeePercent: 1.0,
     dasTaxPercent: 6.0,
@@ -56,8 +56,8 @@ describe('calcDeductions', () => {
     expect(res.inssCost).toBeCloseTo(res.proLabore * 0.11, 2)
   })
 
-  it('12. usdSalary = 0 → no income, fixed fees remain (MEI DAS + Accounting)', () => {
-    const res = calcDeductions({ ...baseParams, usdSalary: 0 })
+  it('12. jobs sum = 0 → no income, fixed fees remain (MEI DAS + Accounting)', () => {
+    const res = calcDeductions({ ...baseParams, jobs: [] })
     expect(res.companyType).toBe('MEI')
     expect(res.totalDeductions).toBeCloseTo(575.60, 2) // 500 acc + 75.60 DAS
     expect(res.netIncomeBrl).toBeCloseTo(-575.60, 2)

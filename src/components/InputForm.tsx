@@ -1,7 +1,8 @@
 import { DollarSign, CheckIcon, LinkIcon } from './Icons';
+import type { Job } from '../hooks/useUrlState';
 
 export interface FormState {
-  usdSalary: number;
+  jobs: Job[];
   exchangeRate: number;
   remittanceFeePercent: number;
   dasTaxPercent: number;
@@ -32,7 +33,7 @@ export function InputForm({
   isMEI,
   computedDasTax,
 }: InputFormProps) {
-  const { usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee, livingCost } = formState;
+  const { exchangeRate, remittanceFeePercent: remittanceFee, dasTaxPercent: dasTax, accountingFee, livingCost } = formState;
 
   return (
     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
@@ -54,31 +55,65 @@ export function InputForm({
       </div>
       
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Mensal (USD)</label>
-            <div className="relative">
-              <span className="absolute left-2.5 top-2 text-slate-400 text-sm">$</span>
-              <input 
-                type="number" 
-                value={usdSalary ? parseFloat(usdSalary.toFixed(2)) : ''}
-                onChange={(e) => setFormState({ ...formState, usdSalary: Number(e.target.value) })}
-                className="w-full pl-6 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
-              />
+        <div className="space-y-3">
+          {formState.jobs.map((job, idx) => (
+            <div key={job.id} className="flex gap-2 items-start">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Emprego {idx + 1} (Mensal)
+                </label>
+                <div className="flex rounded-md shadow-sm">
+                  <select
+                    value={job.currency}
+                    onChange={(e) => {
+                      const newJobs = [...formState.jobs];
+                      newJobs[idx] = { ...newJobs[idx], currency: e.target.value as 'USD' | 'BRL' };
+                      setFormState({ ...formState, jobs: newJobs });
+                    }}
+                    className="inline-flex items-center px-2 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 border border-r-0 border-slate-300 dark:border-slate-600 rounded-l-md text-slate-600 dark:text-slate-200 outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="BRL">BRL</option>
+                  </select>
+                  <input
+                    type="number"
+                    value={job.amount || ''}
+                    onChange={(e) => {
+                      const newJobs = [...formState.jobs];
+                      newJobs[idx] = { ...newJobs[idx], amount: Number(e.target.value) };
+                      setFormState({ ...formState, jobs: newJobs });
+                    }}
+                    className="flex-1 min-w-0 block w-full px-3 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-r-md focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white"
+                  />
+                </div>
+              </div>
+              {formState.jobs.length > 1 && (
+                <button
+                  onClick={() => {
+                    const newJobs = formState.jobs.filter((_, i) => i !== idx);
+                    setFormState({ ...formState, jobs: newJobs });
+                  }}
+                  className="mt-5 p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                  title="Remover"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              )}
             </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Anual (USD)</label>
-            <div className="relative">
-              <span className="absolute left-2.5 top-2 text-slate-400 text-sm">$</span>
-              <input 
-                type="number" 
-                value={usdSalary ? parseFloat((usdSalary * 12).toFixed(2)) : ''}
-                onChange={(e) => setFormState({ ...formState, usdSalary: Number(e.target.value) / 12 })}
-                className="w-full pl-6 pr-2 py-1.5 text-sm bg-transparent border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
-              />
-            </div>
-          </div>
+          ))}
+          {formState.jobs.length < 3 && (
+            <button
+              onClick={() => {
+                setFormState({
+                  ...formState,
+                  jobs: [...formState.jobs, { id: `job-${Date.now()}`, amount: 0, currency: 'USD' }]
+                });
+              }}
+              className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center mt-1"
+            >
+              + Adicionar Emprego
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">

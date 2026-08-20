@@ -15,7 +15,7 @@ export default function App() {
   const { rate: liveRate, loading: rateLoading, lastUpdated, refresh: refreshRate } = useExchangeRate();
 
   const [formState, setFormState] = useUrlState({
-    usdSalary: 2500,
+    jobs: [{ id: 'job-1', amount: 2500, currency: 'USD' }],
     exchangeRate: 5.50,
     remittanceFeePercent: 2.0, // 2% Payoneer
     dasTaxPercent: 3.05, // 3.05% a 4%
@@ -26,7 +26,7 @@ export default function App() {
   });
 
   const { 
-    usdSalary, exchangeRate, remittanceFeePercent: remittanceFee, 
+    jobs, exchangeRate, remittanceFeePercent: remittanceFee, 
     dasTaxPercent: dasTax, taxRegime, accountingFee, livingCost, enableSecurityReserve
   } = formState;
 
@@ -52,7 +52,7 @@ export default function App() {
 
   // Lógica de Cálculo
   const result = calcDeductions({
-    usdSalary,
+    jobs,
     exchangeRate,
     remittanceFeePercent: remittanceFee,
     dasTaxPercent: dasTax,

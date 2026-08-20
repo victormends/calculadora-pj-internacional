@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
 
+export interface Job {
+  id: string;
+  amount: number;
+  currency: 'USD' | 'BRL';
+}
+
 export interface FormState {
-  usdSalary: number
+  jobs: Job[];
   exchangeRate: number
   remittanceFeePercent: number
   dasTaxPercent: number
@@ -16,7 +22,6 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
     // Runs only on first render
     const params = new URLSearchParams(window.location.search)
     
-    const usd  = parseFloat(params.get('usd')  ?? '')
     const rate = parseFloat(params.get('rate') ?? '')
     const fee  = parseFloat(params.get('fee')  ?? '')
     const das  = parseFloat(params.get('das')  ?? '')
@@ -25,8 +30,33 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
     const sec  = params.get('sec')
     const regime = params.get('reg') as FormState['taxRegime'] | null
 
+    let initialJobs: Job[] = []
+    
+    // Check for new format (j1, c1, j2, c2, j3, c3)
+    for (let i = 1; i <= 3; i++) {
+      const jAmt = parseFloat(params.get(`j${i}`) ?? '')
+      const jCur = params.get(`c${i}`) as 'USD' | 'BRL' | null
+      if (!isNaN(jAmt)) {
+        initialJobs.push({
+          id: `url-job-${i}`,
+          amount: jAmt,
+          currency: jCur === 'BRL' ? 'BRL' : 'USD'
+        })
+      }
+    }
+
+    // Legacy fallback
+    if (initialJobs.length === 0) {
+      const legacyUsd = parseFloat(params.get('usd') ?? '')
+      if (!isNaN(legacyUsd)) {
+        initialJobs.push({ id: 'legacy-job', amount: legacyUsd, currency: 'USD' })
+      } else {
+        initialJobs = defaults.jobs
+      }
+    }
+
     return {
-      usdSalary:            isNaN(usd)  ? defaults.usdSalary            : usd,
+      jobs:                 initialJobs,
       exchangeRate:         isNaN(rate) ? defaults.exchangeRate         : rate,
       remittanceFeePercent: isNaN(fee)  ? defaults.remittanceFeePercent : fee,
       dasTaxPercent:        isNaN(das)  ? defaults.dasTaxPercent        : das,
@@ -38,20 +68,23 @@ export function useUrlState(defaults: FormState): [FormState, React.Dispatch<Rea
   })
 
   useEffect(() => {
-    // Skip replaceState if any value is invalid/NaN to avoid ?usd=NaN
-    const { usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, taxRegime, enableSecurityReserve } = state
+    const { jobs, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost, taxRegime, enableSecurityReserve } = state
     
-    if ([usdSalary, exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost]
+    if ([exchangeRate, remittanceFeePercent, dasTaxPercent, accountingFee, livingCost]
         .some(v => isNaN(v) || v === undefined || v === null)) return
 
     const params = new URLSearchParams({
-      usd:  String(usdSalary),
       rate: String(exchangeRate),
       fee:  String(remittanceFeePercent),
       das:  String(dasTaxPercent),
       acc:  String(accountingFee),
       lc:   String(livingCost),
       sec:  String(enableSecurityReserve),
+    })
+    
+    jobs.forEach((job, index) => {
+      params.append(`j${index + 1}`, String(job.amount))
+      params.append(`c${index + 1}`, job.currency)
     })
     
     if (taxRegime) {
