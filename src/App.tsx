@@ -162,7 +162,7 @@ export default function App() {
               remittanceCost={remittanceCost}
               remittanceFee={remittanceFee}
               dasCost={dasCost}
-              dasTax={dasTax}
+              dasTax={computedDasTax}
               accountingFee={accountingFee}
               isMEI={isMEI}
               proLabore={proLabore}

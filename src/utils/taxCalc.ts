@@ -143,12 +143,25 @@ export function calcDeductions(params: CalcParams): DeductionResult {
 
   const remittanceCost  = foreignGrossBrl * (remittanceFeePercent / 100)
 
-  let finalDasPercent = dasTaxPercent
-  if (!isMEI && taxRegime !== 'custom') {
-    finalDasPercent = calcSimplesNacionalRate(annualGrossBrl, taxRegime)
+  let dasCost = 0;
+  if (isMEI) {
+    dasCost = 75.60;
+  } else if (taxRegime === 'custom') {
+    dasCost = grossBrl * (dasTaxPercent / 100);
+  } else {
+    const baseEffectiveRate = calcSimplesNacionalRate(annualGrossBrl, taxRegime) / 100;
+    
+    // Isenção de PIS, COFINS e ISS na exportação de serviços
+    // Anexo III: Isenção de ~49.16% do imposto (paga ~50.84% da alíquota cheia)
+    // Anexo V: Isenção de ~31.15% do imposto (paga ~68.85% da alíquota cheia)
+    const exportMultiplier = taxRegime === 'anexo3' ? 0.5084 : 0.6885;
+    
+    const domesticBrl = grossBrl - foreignGrossBrl;
+    const domesticDas = domesticBrl * baseEffectiveRate;
+    const foreignDas  = foreignGrossBrl * (baseEffectiveRate * exportMultiplier);
+    
+    dasCost = domesticDas + foreignDas;
   }
-
-  const dasCost         = isMEI ? 75.60 : grossBrl * (finalDasPercent / 100)
   const proLabore       = isMEI ? 0 : grossBrl * 0.28
   const inssCost        = isMEI ? 0 : proLabore * 0.11
   const irrfBase        = isMEI ? 0 : proLabore - inssCost
