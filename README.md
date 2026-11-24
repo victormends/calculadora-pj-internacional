@@ -10,7 +10,6 @@ Uma calculadora simples e direta para desenvolvedores brasileiros que trabalham 
 
 🌐 **[Acessar a Calculadora Online](https://victormends.github.io/calculadora-pj-internacional/)**
 
-<!-- Adicione sua imagem de screenshot dentro da pasta docs e descomente a linha abaixo -->
 ![Calculadora PJ Screenshot](docs/screenshot.png)
 
 ## ✨ Features Principais
@@ -81,8 +80,11 @@ Para garantir total transparência sobre como a calculadora chega aos valores l�
 - **Teto de Enquadramento:** MEI mantido no limite oficial vigente de **R$ 81.000**. ME (R$ 360k) e EPP (R$ 4.8M).
 - **Fator R (Simples Nacional - Anexo III/V):** A calculadora assume o uso automático do Fator R, fixando o **Pró-Labore em 28%** do faturamento bruto mensal para garantir tributação no Anexo III (a partir de 6%) em vez do Anexo V.
 - **INSS PF (Sócio-Administrador):** Retenção fixa de **11%** sobre o valor do Pró-Labore.
-- **IRRF (Imposto de Renda PF):** Utiliza a **Tabela Progressiva Atualizada (MP 1.294/2025)**, com isenção efetiva até R$ 2.428,80. Também aplica rigorosamente o **redutor adicional da Lei 15.270/2025**, que zera o IRRF para rendimentos de até R$ 5.000,00 e aplica o redutor proporcional até R$ 7.350,00.
-- **Cálculo CLT Equivalente:** Assume um cenário realista (PJ 11 meses de receita vs CLT 13,33 salários + FGTS + R$ 1k de benefícios). 
+- **IRRF (Imposto de Renda PF):** Utiliza a Tabela Progressiva Atualizada (MP 1.294/2025, com teto de R$ 2.428,80 na primeira faixa de 0%, que substitui a faixa simplificada anterior de R$ 3.036,00 na tabela base) combinada ao redutor adicional da Lei 15.270/2025, que zera o IRRF para rendimentos tributáveis de até R$ 5.000,00 e aplica redutor proporcional até R$ 7.350,00.
+- **Cálculo CLT Equivalente:** Assume um cenário realista (PJ 11 meses de receita vs CLT 13,33 salários + FGTS + R$ 1k de benefícios).
+- **Limitação de lucros e dividendos (Lei 15.270/2025):** a retenção de 10% sobre dividendos superiores a R$ 50.000/mês pagos pela mesma fonte pagadora ainda não é modelada em `src/utils/taxCalc.ts`; a simulação cobre remunerações abaixo desse patamar.
+
+**Última revisão das tabelas tributárias:** 2026-11-24
 
 ## ⚠️ Aviso Legal (Disclaimer)
 
