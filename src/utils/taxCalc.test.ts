@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getCompanyType, calcIRRF, calcDeductions } from './taxCalc'
+import { INSS_CEILING, getCompanyType, calcIRRF, calcDeductions } from './taxCalc'
 
 describe('getCompanyType', () => {
   it('1. annualGross = 81,000 → MEI', () => {
@@ -101,5 +101,19 @@ describe('calcDeductions', () => {
     
     // effectiveTaxRate = (3675.39 / 25000) * 100 = 14.7015
     expect(res.effectiveTaxRate).toBeCloseTo(14.70, 1)
+  })
+
+  it('16. Caps INSS at 2026 official ceiling (INSS_CEILING = 8,475.55 -> max R$ 932.31)', () => {
+    const res = calcDeductions({
+      ...baseParams,
+      jobs: [{ amount: 10_000, currency: 'USD' as const }],
+      usdExchangeRate: 5.5,
+    })
+
+    expect(res.grossBrl).toBeCloseTo(55_000, 2)
+    expect(res.proLabore).toBeCloseTo(15_400, 2)
+    expect(res.proLabore).toBeGreaterThan(INSS_CEILING)
+    expect(res.inssCost).toBeCloseTo(8475.55 * 0.11, 2)
+    expect(res.inssCost).toBeCloseTo(932.31, 2)
   })
 })

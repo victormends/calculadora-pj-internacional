@@ -1,9 +1,11 @@
 export type CompanyType = 'MEI' | 'ME' | 'EPP' | 'OUT'
 
 // MEI ceiling (kept at 81,000 to match current active legislation)
-export const MEI_CEILING = 81_000
-export const ME_CEILING  = 360_000
-export const EPP_CEILING = 4_800_000
+export const MEI_CEILING  = 81_000
+export const ME_CEILING   = 360_000
+export const EPP_CEILING  = 4_800_000
+// Portaria Interministerial MPS/MF nº 13/2026 (max monthly INSS contribution R$ 932.31 at 11%)
+export const INSS_CEILING = 8_475.55
 
 export type TaxRegime = 'anexo3' | 'anexo5' | 'custom'
 
@@ -163,7 +165,7 @@ export function calcDeductions(params: CalcParams): DeductionResult {
     dasCost = domesticDas + foreignDas;
   }
   const proLabore       = isMEI ? 0 : grossBrl * 0.28
-  const inssCost        = isMEI ? 0 : proLabore * 0.11
+  const inssCost        = isMEI ? 0 : Math.min(proLabore, INSS_CEILING) * 0.11
   const irrfBase        = isMEI ? 0 : proLabore - inssCost
   const irrfCost        = isMEI ? 0 : calcIRRF(irrfBase)
 

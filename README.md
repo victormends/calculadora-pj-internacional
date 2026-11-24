@@ -77,12 +77,13 @@ npm run build
 
 Para garantir total transparência sobre como a calculadora chega aos valores líquidos, aqui estão as regras de negócio e alíquotas fixadas no código (`src/utils/taxCalc.ts`), atualizadas com a legislação vigente de 2025/2026:
 
+> **Limitação principal para rendas altas (Lei 15.270/2025):** a retenção de 10% sobre distribuição de lucros e dividendos acima de R$ 50.000/mês por fonte pagadora e o imposto mínimo anual (IRPFM) para rendas totais acima de R$ 600.000/ano (patamar atingido por desenvolvedores a partir de ~US$ 10k/mês) não são modelados em `src/utils/taxCalc.ts`.
+
 - **Teto de Enquadramento:** MEI mantido no limite oficial vigente de **R$ 81.000**. ME (R$ 360k) e EPP (R$ 4.8M).
 - **Fator R (Simples Nacional - Anexo III/V):** A calculadora assume o uso automático do Fator R, fixando o **Pró-Labore em 28%** do faturamento bruto mensal para garantir tributação no Anexo III (a partir de 6%) em vez do Anexo V.
-- **INSS PF (Sócio-Administrador):** Retenção fixa de **11%** sobre o valor do Pró-Labore.
-- **IRRF (Imposto de Renda PF):** Utiliza a Tabela Progressiva Atualizada (MP 1.294/2025, com teto de R$ 2.428,80 na primeira faixa de 0%, que substitui a faixa simplificada anterior de R$ 3.036,00 na tabela base) combinada ao redutor adicional da Lei 15.270/2025, que zera o IRRF para rendimentos tributáveis de até R$ 5.000,00 e aplica redutor proporcional até R$ 7.350,00.
+- **INSS PF (Sócio-Administrador):** Retenção de **11%** sobre o Pró-Labore, limitada ao **teto oficial do INSS de 2026** (Portaria MPS/MF nº 13/2026: R$ 8.475,55, teto de contribuição de R$ 932,31/mês).
+- **IRRF (Imposto de Renda PF):** Utiliza a Tabela Progressiva Atualizada (MP 1.294/2025), cujo teto da primeira faixa (alíquota 0%) é R$ 2.428,80 e que, somado ao desconto simplificado mensal de R$ 607,20 da própria MP, resulta em isenção efetiva de até R$ 3.036,00. Sobre essa base, a calculadora aplica rigorosamente o redutor adicional da Lei 15.270/2025, zerando o IRRF para rendimentos tributáveis de até R$ 5.000,00 e aplicando redução proporcional até R$ 7.350,00.
 - **Cálculo CLT Equivalente:** Assume um cenário realista (PJ 11 meses de receita vs CLT 13,33 salários + FGTS + R$ 1k de benefícios).
-- **Limitação de lucros e dividendos (Lei 15.270/2025):** a retenção de 10% sobre dividendos superiores a R$ 50.000/mês pagos pela mesma fonte pagadora ainda não é modelada em `src/utils/taxCalc.ts`; a simulação cobre remunerações abaixo desse patamar.
 
 **Última revisão das tabelas tributárias:** 2026-11-24
 
