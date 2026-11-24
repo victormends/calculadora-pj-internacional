@@ -6,6 +6,8 @@
 
 Uma calculadora simples e direta para desenvolvedores brasileiros que trabalham como Pessoa Jurídica (PJ) para o exterior. Calcula impostos (DAS, IRRF, INSS) e taxas (remessa, contabilidade) a partir de um salário em Dólar (USD).
 
+> **Aviso:** Esta ferramenta tem caráter exclusivamente informativo e educacional para estimativas rápidas; não substitui orientação contábil, fiscal ou jurídica profissional.
+
 🌐 **[Acessar a Calculadora Online](https://victormends.github.io/calculadora-pj-internacional/)**
 
 <!-- Adicione sua imagem de screenshot dentro da pasta docs e descomente a linha abaixo -->
